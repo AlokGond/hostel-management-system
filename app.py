@@ -9,15 +9,25 @@ from flask_migrate import Migrate
 import json
 import pyotp
 from functools import wraps
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', '4x7PJz9Ks2mWvNqY3bFhRtUe')
 
 # Database configuration
 if os.environ.get('FLASK_ENV') == 'production':
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', '').replace('postgres://', 'postgresql://')
+    database_url = os.environ.get('DATABASE_URL', '')
+    if database_url.startswith('postgres://'):
+        database_url = database_url.replace('postgres://', 'postgresql://', 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    logger.info(f"Using production database: {database_url}")
 else:
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///hostel.db'
+    logger.info("Using development database: sqlite:///hostel.db")
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads')
@@ -324,66 +334,37 @@ def login():
         if current_user.is_admin:
             return redirect(url_for('admin_dashboard'))
         return redirect(url_for('student_dashboard'))
-    
+
     if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
-        remember = 'remember' in request.form
-        
-        user = User.query.filter_by(email=email).first()
-        
-        # Check if account is locked
-        if user and user.account_locked_until and user.account_locked_until > datetime.utcnow():
-            lock_time_remaining = user.account_locked_until - datetime.utcnow()
-            minutes_remaining = int(lock_time_remaining.total_seconds() / 60) + 1
-            flash(f'Account is locked. Try again in {minutes_remaining} minutes.', 'danger')
-            return redirect(url_for('login'))
-        
-        if user and check_password_hash(user.password, password):
-            # Reset failed login attempts on successful login
-            user.failed_login_attempts = 0
-            user.account_locked_until = None
+        try:
+            email = request.form.get('email')
+            password = request.form.get('password')
             
-            # Check if 2FA is enabled
-            if user.is_two_factor_enabled:
-                # Store user ID in session for 2FA verification
-                session['user_id_for_2fa'] = user.id
-                return redirect(url_for('verify_2fa'))
+            logger.debug(f"Login attempt for email: {email}")
             
-            # Log successful login
-            user.last_login = datetime.utcnow()
-            db.session.commit()
+            user = User.query.filter_by(email=email).first()
+            if not user:
+                logger.warning(f"No user found with email: {email}")
+                flash('Invalid email or password', 'danger')
+                return redirect(url_for('login'))
             
-            login_user(user, remember=remember)
+            if not check_password_hash(user.password, password):
+                logger.warning(f"Invalid password for user: {email}")
+                flash('Invalid email or password', 'danger')
+                return redirect(url_for('login'))
             
-            # Log activity
-            log_activity(user.id, 'Logged in', 
-                         details=f'Login from IP: {request.remote_addr}',
-                         ip_address=request.remote_addr,
-                         user_agent=request.user_agent.string)
+            login_user(user)
+            logger.info(f"User logged in successfully: {email}")
             
-            # Redirect based on user type
             if user.is_admin:
                 return redirect(url_for('admin_dashboard'))
             return redirect(url_for('student_dashboard'))
-        else:
-            # Increment failed login attempts
-            if user:
-                user.failed_login_attempts += 1
-                
-                # Lock account after 5 failed attempts
-                if user.failed_login_attempts >= 5:
-                    user.account_locked_until = datetime.utcnow() + timedelta(minutes=15)
-                    flash('Too many failed login attempts. Account locked for 15 minutes.', 'danger')
-                else:
-                    flash('Invalid email or password.', 'danger')
-                
-                db.session.commit()
-            else:
-                flash('Invalid email or password.', 'danger')
             
+        except Exception as e:
+            logger.error(f"Login error: {str(e)}", exc_info=True)
+            flash('An error occurred during login. Please try again.', 'danger')
             return redirect(url_for('login'))
-    
+
     return render_template('login.html')
 
 @app.route('/verify-2fa', methods=['GET', 'POST'])
@@ -411,7 +392,7 @@ def verify_2fa():
             
             # Log activity
             log_activity(user.id, 'Logged in with 2FA', 
-                         details=f'Login from IP: {request.remote_addr}',
+                         details=f"Login from IP: {request.remote_addr}",
                          ip_address=request.remote_addr,
                          user_agent=request.user_agent.string)
             
@@ -1586,39 +1567,45 @@ def retrieve_room(request_id):
 if __name__ == '__main__':
     print("Starting Flask server...")
     with app.app_context():
-        print("Creating database tables...")
-        db.create_all()
-        
-        # Create admin user if it doesn't exist
-        admin = User.query.filter_by(email='admin@example.com').first()
-        if not admin:
-            print("Creating admin user...")
-            admin = User(
-                email='admin@example.com',
-                password=generate_password_hash('admin123'),
-                is_admin=True,
-                first_name='Admin',
-                last_name='User',
-                father_name='Admin Father',
-                mother_name='Admin Mother',
-                date_of_birth=datetime.strptime('1990-01-01', '%Y-%m-%d'),
-                gender='Other',
-                phone='1234567890',
-                address='Admin Address',
-                city='Admin City',
-                state='Admin State',
-                pincode='123456',
-                course='Admin',
-                batch_year=2023,
-                emergency_contact='1234567890',
-                emergency_contact_name='Emergency Contact',
-                emergency_contact_relation='Relation'
-            )
-            db.session.add(admin)
-            db.session.commit()
-            print("Admin user created successfully!")
-        
-        print("Database initialization completed!")
+        try:
+            logger.info("Creating database tables...")
+            db.create_all()
+            
+            # Create admin user if it doesn't exist
+            admin = User.query.filter_by(email='admin@example.com').first()
+            if not admin:
+                logger.info("Creating admin user...")
+                admin = User(
+                    email='admin@example.com',
+                    password=generate_password_hash('admin123'),
+                    is_admin=True,
+                    first_name='Admin',
+                    last_name='User',
+                    father_name='Admin Father',
+                    mother_name='Admin Mother',
+                    date_of_birth=datetime.strptime('1990-01-01', '%Y-%m-%d'),
+                    gender='Other',
+                    phone='1234567890',
+                    address='Admin Address',
+                    city='Admin City',
+                    state='Admin State',
+                    pincode='123456',
+                    course='Admin',
+                    batch_year=2023,
+                    emergency_contact='1234567890',
+                    emergency_contact_name='Emergency Contact',
+                    emergency_contact_relation='Relation'
+                )
+                db.session.add(admin)
+                db.session.commit()
+                logger.info("Admin user created successfully!")
+            else:
+                logger.info("Admin user already exists")
+            
+            logger.info("Database initialization completed!")
+        except Exception as e:
+            logger.error(f"Database initialization error: {str(e)}", exc_info=True)
+            raise
     
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
