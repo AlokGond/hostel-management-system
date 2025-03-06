@@ -11,11 +11,12 @@ import pyotp
 from functools import wraps
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key'
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.abspath(os.path.join(os.path.dirname(__file__), "hostel.db"))}'
+app.config['SECRET_KEY'] = '4x7PJz9Ks2mWvNqY3bFhRtUe'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///hostel.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+app.config['FLASK_ENV'] = 'production'
 
 # Ensure upload directories exist
 for folder in ['profile_photos', 'room_photos', 'maintenance_photos']:
