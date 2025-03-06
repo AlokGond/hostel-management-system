@@ -1,0 +1,319 @@
+{% extends "base.html" %}
+
+{% block title %}Admin - Complaints Management{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-3">Complaints Management</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Admin Dashboard</a></li>
+                    <li class="breadcrumb-item active">Complaints Management</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Complaints</h5>
+                    <div>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="filter-toggle">
+                            <i class="fas fa-filter me-1"></i> Filter
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Search and Filter Section -->
+                    <div class="filter-controls mb-4 d-none" id="filter-controls">
+                        <form method="get" action="{{ url_for('admin_complaints') }}" class="row g-3">
+                            <div class="col-md-3">
+                                <label for="search" class="form-label">Search</label>
+                                <input type="text" class="form-control" id="search" name="search" 
+                                       placeholder="Search by subject or description" value="{{ request.args.get('search', '') }}">
+                            </div>
+                            <div class="col-md-2">
+                                <label for="filter-type" class="form-label">Complaint Type</label>
+                                <select class="form-select" id="filter-type" name="type">
+                                    <option value="">All Types</option>
+                                    <option value="maintenance" {% if request.args.get('type') == 'maintenance' %}selected{% endif %}>Maintenance</option>
+                                    <option value="plumbing" {% if request.args.get('type') == 'plumbing' %}selected{% endif %}>Plumbing</option>
+                                    <option value="electrical" {% if request.args.get('type') == 'electrical' %}selected{% endif %}>Electrical</option>
+                                    <option value="furniture" {% if request.args.get('type') == 'furniture' %}selected{% endif %}>Furniture</option>
+                                    <option value="cleanliness" {% if request.args.get('type') == 'cleanliness' %}selected{% endif %}>Cleanliness</option>
+                                    <option value="wifi" {% if request.args.get('type') == 'wifi' %}selected{% endif %}>WiFi/Internet</option>
+                                    <option value="mess" {% if request.args.get('type') == 'mess' %}selected{% endif %}>Mess/Food</option>
+                                    <option value="other" {% if request.args.get('type') == 'other' %}selected{% endif %}>Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="filter-status" class="form-label">Status</label>
+                                <select class="form-select" id="filter-status" name="status">
+                                    <option value="">All Statuses</option>
+                                    <option value="new" {% if request.args.get('status') == 'new' %}selected{% endif %}>New</option>
+                                    <option value="in_progress" {% if request.args.get('status') == 'in_progress' %}selected{% endif %}>In Progress</option>
+                                    <option value="resolved" {% if request.args.get('status') == 'resolved' %}selected{% endif %}>Resolved</option>
+                                    <option value="closed" {% if request.args.get('status') == 'closed' %}selected{% endif %}>Closed</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="filter-priority" class="form-label">Priority</label>
+                                <select class="form-select" id="filter-priority" name="priority">
+                                    <option value="">All Priorities</option>
+                                    <option value="low" {% if request.args.get('priority') == 'low' %}selected{% endif %}>Low</option>
+                                    <option value="medium" {% if request.args.get('priority') == 'medium' %}selected{% endif %}>Medium</option>
+                                    <option value="high" {% if request.args.get('priority') == 'high' %}selected{% endif %}>High</option>
+                                    <option value="urgent" {% if request.args.get('priority') == 'urgent' %}selected{% endif %}>Urgent</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary me-2">Apply Filters</button>
+                                <a href="{{ url_for('admin_complaints') }}" class="btn btn-outline-secondary">Clear Filters</a>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Complaints Table -->
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover align-middle">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Student</th>
+                                    <th>Subject</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Priority</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for complaint in complaints %}
+                                <tr>
+                                    <td>{{ complaint.id }}</td>
+                                    <td>
+                                        {% set user = users.get(complaint.user_id) %}
+                                        {% if user %}
+                                            {{ user.first_name }} {{ user.last_name }}
+                                        {% else %}
+                                            User #{{ complaint.user_id }}
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="d-inline-block text-truncate" style="max-width: 150px;"
+                                              data-bs-toggle="tooltip" title="{{ complaint.subject }}">
+                                            {{ complaint.subject }}
+                                        </span>
+                                        {% if complaint.is_private %}
+                                        <span class="badge bg-secondary ms-1" data-bs-toggle="tooltip" title="This complaint is private">
+                                            <i class="fas fa-lock"></i>
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if complaint.complaint_type == 'maintenance' %}
+                                            <span class="badge bg-secondary">Maintenance</span>
+                                        {% elif complaint.complaint_type == 'plumbing' %}
+                                            <span class="badge bg-info text-dark">Plumbing</span>
+                                        {% elif complaint.complaint_type == 'electrical' %}
+                                            <span class="badge bg-warning text-dark">Electrical</span>
+                                        {% elif complaint.complaint_type == 'furniture' %}
+                                            <span class="badge bg-dark">Furniture</span>
+                                        {% elif complaint.complaint_type == 'cleanliness' %}
+                                            <span class="badge bg-success">Cleanliness</span>
+                                        {% elif complaint.complaint_type == 'wifi' %}
+                                            <span class="badge bg-primary">WiFi/Internet</span>
+                                        {% elif complaint.complaint_type == 'mess' %}
+                                            <span class="badge bg-danger">Mess/Food</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Other</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if complaint.status == 'new' %}
+                                            <span class="badge bg-info text-dark">New</span>
+                                        {% elif complaint.status == 'in_progress' %}
+                                            <span class="badge bg-warning text-dark">In Progress</span>
+                                        {% elif complaint.status == 'resolved' %}
+                                            <span class="badge bg-success">Resolved</span>
+                                        {% elif complaint.status == 'closed' %}
+                                            <span class="badge bg-secondary">Closed</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if complaint.priority == 'low' %}
+                                            <span class="badge bg-success">Low</span>
+                                        {% elif complaint.priority == 'medium' %}
+                                            <span class="badge bg-info">Medium</span>
+                                        {% elif complaint.priority == 'high' %}
+                                            <span class="badge bg-warning text-dark">High</span>
+                                        {% elif complaint.priority == 'urgent' %}
+                                            <span class="badge bg-danger">Urgent</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small>{{ complaint.created_at.strftime('%d-%m-%Y') }}</small>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{{ url_for('admin_complaint_details', id=complaint.id) }}" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% if complaint.status != 'closed' %}
+                                            <!-- Quick Status Update -->
+                                            <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                                Update
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                {% if complaint.status != 'in_progress' %}
+                                                <li>
+                                                    <form method="post" action="{{ url_for('admin_complaints') }}">
+                                                        <input type="hidden" name="action" value="update_status">
+                                                        <input type="hidden" name="complaint_id" value="{{ complaint.id }}">
+                                                        <input type="hidden" name="status" value="in_progress">
+                                                        <button type="submit" class="dropdown-item">
+                                                            <i class="fas fa-hourglass-half me-1 text-warning"></i> Mark as In Progress
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                                {% endif %}
+                                                {% if complaint.status != 'resolved' %}
+                                                <li>
+                                                    <form method="post" action="{{ url_for('admin_complaints') }}">
+                                                        <input type="hidden" name="action" value="update_status">
+                                                        <input type="hidden" name="complaint_id" value="{{ complaint.id }}">
+                                                        <input type="hidden" name="status" value="resolved">
+                                                        <button type="submit" class="dropdown-item">
+                                                            <i class="fas fa-check me-1 text-success"></i> Mark as Resolved
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                                {% endif %}
+                                            </ul>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="8" class="text-center py-3">No complaints found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    {% if total_pages > 1 %}
+                    <nav aria-label="Complaints pagination" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
+                                <a class="page-link" href="{{ url_for('admin_complaints', page=current_page-1, type=request.args.get('type'), status=request.args.get('status'), priority=request.args.get('priority'), search=request.args.get('search')) }}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            
+                            {% for page in range(1, total_pages + 1) %}
+                            <li class="page-item {% if page == current_page %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('admin_complaints', page=page, type=request.args.get('type'), status=request.args.get('status'), priority=request.args.get('priority'), search=request.args.get('search')) }}">{{ page }}</a>
+                            </li>
+                            {% endfor %}
+                            
+                            <li class="page-item {% if current_page == total_pages %}disabled{% endif %}">
+                                <a class="page-link" href="{{ url_for('admin_complaints', page=current_page+1, type=request.args.get('type'), status=request.args.get('status'), priority=request.args.get('priority'), search=request.args.get('search')) }}" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                    {% endif %}
+                    
+                    <!-- Statistics -->
+                    <div class="row mt-4">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Complaints Overview</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="card bg-light">
+                                                <div class="card-body text-center">
+                                                    <h1 class="display-4">{{ stats.total|default(0) }}</h1>
+                                                    <p class="mb-0">Total Complaints</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="card bg-info text-dark">
+                                                <div class="card-body text-center">
+                                                    <h1 class="display-4">{{ stats.new|default(0) }}</h1>
+                                                    <p class="mb-0">New</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="card bg-warning text-dark">
+                                                <div class="card-body text-center">
+                                                    <h1 class="display-4">{{ stats.in_progress|default(0) }}</h1>
+                                                    <p class="mb-0">In Progress</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="card bg-success text-white">
+                                                <div class="card-body text-center">
+                                                    <h1 class="display-4">{{ stats.resolved|default(0) }}</h1>
+                                                    <p class="mb-0">Resolved</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Filter toggle
+        const filterToggle = document.getElementById('filter-toggle');
+        if (filterToggle) {
+            filterToggle.addEventListener('click', function() {
+                const filterControls = document.getElementById('filter-controls');
+                filterControls.classList.toggle('d-none');
+            });
+        }
+        
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        
+        // Show filter section if any filters are active
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('type') || urlParams.has('status') || urlParams.has('priority') || urlParams.has('search')) {
+            const filterControls = document.getElementById('filter-controls');
+            if (filterControls) {
+                filterControls.classList.remove('d-none');
+            }
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}Meal Preferences{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-3">Meal Preferences</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('home') }}">Home</a></li>
+                    <li class="breadcrumb-item active">Meal Preferences</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Weekly Meal Schedule</h5>
+                </div>
+                <div class="card-body">
+                    {% if success_message %}
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        {{ success_message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endif %}
+                
+                    <form method="post" action="{{ url_for('meal_preference') }}">
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Day</th>
+                                    <th>Breakfast</th>
+                                    <th>Lunch</th>
+                                    <th>Dinner</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}
+                                <tr>
+                                    <td class="align-middle">{{ day }}</td>
+                                    <td>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="breakfast-{{ day|lower }}" 
+                                                   name="meals[{{ day }}][breakfast]" value="1"
+                                                   {% if meal_prefs.get(day, {}).get('breakfast') %}checked{% endif %}>
+                                            <label class="form-check-label" for="breakfast-{{ day|lower }}">
+                                                Include
+                                            </label>
+                                        </div>
+                                        <div class="mt-2">
+                                            <select class="form-select form-select-sm" name="meals[{{ day }}][breakfast_type]">
+                                                <option value="regular" {% if meal_prefs.get(day, {}).get('breakfast_type') == 'regular' %}selected{% endif %}>Regular</option>
+                                                <option value="vegetarian" {% if meal_prefs.get(day, {}).get('breakfast_type') == 'vegetarian' %}selected{% endif %}>Vegetarian</option>
+                                                <option value="vegan" {% if meal_prefs.get(day, {}).get('breakfast_type') == 'vegan' %}selected{% endif %}>Vegan</option>
+                                                <option value="gluten_free" {% if meal_prefs.get(day, {}).get('breakfast_type') == 'gluten_free' %}selected{% endif %}>Gluten-Free</option>
+                                            </select>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="lunch-{{ day|lower }}" 
+                                                   name="meals[{{ day }}][lunch]" value="1"
+                                                   {% if meal_prefs.get(day, {}).get('lunch') %}checked{% endif %}>
+                                            <label class="form-check-label" for="lunch-{{ day|lower }}">
+                                                Include
+                                            </label>
+                                        </div>
+                                        <div class="mt-2">
+                                            <select class="form-select form-select-sm" name="meals[{{ day }}][lunch_type]">
+                                                <option value="regular" {% if meal_prefs.get(day, {}).get('lunch_type') == 'regular' %}selected{% endif %}>Regular</option>
+                                                <option value="vegetarian" {% if meal_prefs.get(day, {}).get('lunch_type') == 'vegetarian' %}selected{% endif %}>Vegetarian</option>
+                                                <option value="vegan" {% if meal_prefs.get(day, {}).get('lunch_type') == 'vegan' %}selected{% endif %}>Vegan</option>
+                                                <option value="gluten_free" {% if meal_prefs.get(day, {}).get('lunch_type') == 'gluten_free' %}selected{% endif %}>Gluten-Free</option>
+                                            </select>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="dinner-{{ day|lower }}" 
+                                                   name="meals[{{ day }}][dinner]" value="1"
+                                                   {% if meal_prefs.get(day, {}).get('dinner') %}checked{% endif %}>
+                                            <label class="form-check-label" for="dinner-{{ day|lower }}">
+                                                Include
+                                            </label>
+                                        </div>
+                                        <div class="mt-2">
+                                            <select class="form-select form-select-sm" name="meals[{{ day }}][dinner_type]">
+                                                <option value="regular" {% if meal_prefs.get(day, {}).get('dinner_type') == 'regular' %}selected{% endif %}>Regular</option>
+                                                <option value="vegetarian" {% if meal_prefs.get(day, {}).get('dinner_type') == 'vegetarian' %}selected{% endif %}>Vegetarian</option>
+                                                <option value="vegan" {% if meal_prefs.get(day, {}).get('dinner_type') == 'vegan' %}selected{% endif %}>Vegan</option>
+                                                <option value="gluten_free" {% if meal_prefs.get(day, {}).get('dinner_type') == 'gluten_free' %}selected{% endif %}>Gluten-Free</option>
+                                            </select>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        
+                        <div class="mb-3">
+                            <label for="special-requests" class="form-label">Special Dietary Requirements or Allergies</label>
+                            <textarea class="form-control" id="special-requests" name="special_requests" rows="3" 
+                                      placeholder="Please list any allergies or special dietary requirements...">{{ meal_prefs.get('special_requests', '') }}</textarea>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="reset" class="btn btn-outline-secondary">Reset</button>
+                            <button type="submit" class="btn btn-primary">Save Preferences</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Weekly Menu</h5>
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="menuAccordion">
+                        {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="heading{{ day }}">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                        data-bs-target="#collapse{{ day }}" aria-expanded="false" aria-controls="collapse{{ day }}">
+                                    {{ day }}
+                                </button>
+                            </h2>
+                            <div id="collapse{{ day }}" class="accordion-collapse collapse" aria-labelledby="heading{{ day }}" 
+                                 data-bs-parent="#menuAccordion">
+                                <div class="accordion-body">
+                                    <h6 class="fw-bold">Breakfast</h6>
+                                    <p>{{ weekly_menu.get(day, {}).get('breakfast', 'Menu not available') }}</p>
+                                    
+                                    <h6 class="fw-bold">Lunch</h6>
+                                    <p>{{ weekly_menu.get(day, {}).get('lunch', 'Menu not available') }}</p>
+                                    
+                                    <h6 class="fw-bold">Dinner</h6>
+                                    <p>{{ weekly_menu.get(day, {}).get('dinner', 'Menu not available') }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <small class="text-muted">Menu is subject to change based on availability.</small>
+                </div>
+            </div>
+            
+            <!-- Meal Statistics Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Monthly Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Total Meals This Month:</span>
+                        <span class="fw-bold">{{ meal_stats.total|default('0') }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Breakfast Count:</span>
+                        <span class="fw-bold">{{ meal_stats.breakfast|default('0') }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Lunch Count:</span>
+                        <span class="fw-bold">{{ meal_stats.lunch|default('0') }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Dinner Count:</span>
+                        <span class="fw-bold">{{ meal_stats.dinner|default('0') }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Meal Cost (Estimated):</span>
+                        <span class="fw-bold">₹{{ meal_stats.cost|default('0') }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Quick selection buttons
+        const quickSelectButtons = document.querySelectorAll('.quick-select');
+        quickSelectButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const action = this.getAttribute('data-action');
+                const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+                
+                if (action === 'select-all') {
+                    checkboxes.forEach(checkbox => checkbox.checked = true);
+                } else if (action === 'deselect-all') {
+                    checkboxes.forEach(checkbox => checkbox.checked = false);
+                } else if (action === 'weekdays-only') {
+                    const weekdayRows = [0, 1, 2, 3, 4]; // Monday to Friday (0-indexed)
+                    checkboxes.forEach((checkbox, index) => {
+                        const rowIndex = Math.floor(index / 3);
+                        checkbox.checked = weekdayRows.includes(rowIndex);
+                    });
+                }
+            });
+        });
+        
+        // Tooltip initialization
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock %}

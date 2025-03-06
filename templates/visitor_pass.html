@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visitor Pass - {{ visitor.visitor_name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .pass-container {
+            max-width: 500px;
+            margin: 50px auto;
+            background-color: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        .pass-header {
+            background-color: #0d6efd;
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+        }
+        .pass-header h3 {
+            margin: 0;
+            font-weight: 600;
+        }
+        .pass-body {
+            padding: 25px;
+        }
+        .pass-qr {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .pass-qr img {
+            max-width: 200px;
+            border: 1px solid #ddd;
+            padding: 5px;
+        }
+        .visitor-info {
+            margin-bottom: 20px;
+        }
+        .info-row {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        .info-label {
+            font-weight: 600;
+            width: 40%;
+            color: #555;
+        }
+        .info-value {
+            width: 60%;
+        }
+        .pass-footer {
+            background-color: #f1f1f1;
+            padding: 15px;
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+        }
+        .validity {
+            font-weight: 600;
+            color: #28a745;
+            margin-top: 10px;
+            padding: 8px;
+            border: 1px dashed #28a745;
+            border-radius: 5px;
+            display: inline-block;
+        }
+        .pass-notes {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+        .pass-notes ul {
+            padding-left: 20px;
+        }
+        @media print {
+            body {
+                background-color: white;
+            }
+            .pass-container {
+                box-shadow: none;
+                margin: 0;
+                max-width: 100%;
+            }
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="pass-container">
+            <div class="pass-header">
+                <h3>VISITOR PASS</h3>
+                <small>{{ hostel_name|default('Hostel Management System') }}</small>
+            </div>
+            
+            <div class="pass-body">
+                <div class="pass-qr">
+                    <img src="https://chart.googleapis.com/chart?cht=qr&chl={{ visitor.id }}&chs=200x200&choe=UTF-8&chld=L|2" alt="QR Code">
+                    <div><small class="text-muted">Pass ID: {{ visitor.id }}</small></div>
+                </div>
+                
+                <div class="visitor-info">
+                    <div class="info-row">
+                        <div class="info-label">Visitor Name:</div>
+                        <div class="info-value">{{ visitor.visitor_name }}</div>
+                    </div>
+                    
+                    <div class="info-row">
+                        <div class="info-label">Phone Number:</div>
+                        <div class="info-value">{{ visitor.visitor_phone }}</div>
+                    </div>
+                    
+                    <div class="info-row">
+                        <div class="info-label">Visit Date:</div>
+                        <div class="info-value">{{ visitor.visit_date.strftime('%d-%m-%Y') }}</div>
+                    </div>
+                    
+                    <div class="info-row">
+                        <div class="info-label">Purpose of Visit:</div>
+                        <div class="info-value">{{ visitor.purpose }}</div>
+                    </div>
+                    
+                    <div class="info-row">
+                        <div class="info-label">Person to Meet:</div>
+                        <div class="info-value">{{ visitor.who_to_meet }}</div>
+                    </div>
+                    
+                    <div class="info-row">
+                        <div class="info-label">Check-in Time:</div>
+                        <div class="info-value">
+                            {% if visitor.check_in %}
+                                {{ visitor.check_in.strftime('%H:%M') }}
+                            {% else %}
+                                Not checked in yet
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="info-row">
+                        <div class="info-label">Expected Duration:</div>
+                        <div class="info-value">{{ visitor.expected_duration }} hour(s)</div>
+                    </div>
+                </div>
+                
+                <div class="text-center">
+                    <div class="validity">
+                        Valid for {{ visitor.visit_date.strftime('%d-%m-%Y') }} only
+                    </div>
+                </div>
+                
+                <div class="pass-notes">
+                    <p><strong>Important Notes:</strong></p>
+                    <ul>
+                        <li>This pass must be carried at all times while on the premises.</li>
+                        <li>Please report to the front desk for check-in and check-out.</li>
+                        <li>Visitors are required to follow all hostel rules and regulations.</li>
+                        <li>Visiting hours: 10:00 AM to 6:00 PM.</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="pass-footer">
+                <p>This is a computer-generated pass. No signature required.</p>
+                <p class="mb-0">Generated on: {{ now.strftime('%d-%m-%Y %H:%M') }}</p>
+            </div>
+        </div>
+        
+        <div class="text-center mt-4 no-print">
+            <button class="btn btn-primary me-2" onclick="window.print()">
+                <i class="fas fa-print me-1"></i> Print Pass
+            </button>
+            <a href="{{ url_for('visitor_management') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Back to Visitor Management
+            </a>
+        </div>
+    </div>
+</body>
+</html>

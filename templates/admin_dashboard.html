@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Admin Dashboard</h2>
+    
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <i class="fas fa-users mb-2" style="font-size: 2rem;"></i>
+                <h3>{{ total_users }}</h3>
+                <p>Total Students</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <i class="fas fa-door-open mb-2" style="font-size: 2rem;"></i>
+                <h3>{{ Room.query.filter_by(is_available=True).count() }}</h3>
+                <p>Available Rooms</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <i class="fas fa-clock mb-2" style="font-size: 2rem;"></i>
+                <h3>{{ RoomRequest.query.filter_by(status='pending').count() }}</h3>
+                <p>Pending Requests</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <i class="fas fa-check-circle mb-2" style="font-size: 2rem;"></i>
+                <h3>{{ RoomRequest.query.filter_by(status='approved').count() }}</h3>
+                <p>Approved Requests</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <a href="{{ url_for('manage_students') }}" class="btn btn-primary w-100 mb-2">
+                                <i class="fas fa-users me-2"></i>Manage Students
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('manage_rooms') }}" class="btn btn-primary w-100 mb-2">
+                                <i class="fas fa-bed me-2"></i>Manage Rooms
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('admin_hostels') }}" class="btn btn-primary w-100 mb-2">
+                                <i class="fas fa-building me-2"></i>Manage Hostels
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('settings') }}" class="btn btn-primary w-100 mb-2">
+                                <i class="fas fa-cog me-2"></i>Settings
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Room Requests -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Recent Room Requests</h5>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="filterRequests('all')">All</button>
+                        <button type="button" class="btn btn-sm btn-outline-warning" onclick="filterRequests('pending')">Pending</button>
+                        <button type="button" class="btn btn-sm btn-outline-success" onclick="filterRequests('approved')">Approved</button>
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="filterRequests('rejected')">Rejected</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Room</th>
+                                    <th>Hostel</th>
+                                    <th>Request Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for request in requests %}
+                                <tr class="request-row" data-status="{{ request.status }}">
+                                    <td>{{ request.user.email }}</td>
+                                    <td>Room {{ request.room.room_number }}</td>
+                                    <td>{{ request.room.hostel.name }}</td>
+                                    <td>{{ request.date_requested.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        <span class="badge {% if request.status == 'pending' %}bg-warning{% elif request.status == 'approved' %}bg-success{% else %}bg-danger{% endif %}">
+                                            {{ request.status.title() }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if request.status == 'pending' %}
+                                        <div class="btn-group">
+                                            <form action="{{ url_for('approve_request', request_id=request.id) }}" method="POST" style="display: inline;">
+                                                <button type="submit" class="btn btn-sm btn-success">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                            </form>
+                                            <form action="{{ url_for('reject_request', request_id=request.id) }}" method="POST" style="display: inline;">
+                                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to reject this request?')">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function filterRequests(status) {
+    const rows = document.querySelectorAll('.request-row');
+    rows.forEach(row => {
+        if (status === 'all' || row.dataset.status === status) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+</script>
+{% endblock %}

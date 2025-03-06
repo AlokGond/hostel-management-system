@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- Profile Section -->
+        <div class="col-md-3">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    {% if current_user.profile_photo %}
+                        <img src="{{ url_for('static', filename='profile_photos/' + current_user.profile_photo) }}" 
+                             class="rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+                    {% else %}
+                        <img src="{{ url_for('static', filename='default_profile.png') }}" 
+                             class="rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+                    {% endif %}
+                    <h5>{{ current_user.first_name }} {{ current_user.last_name or 'Student' }}</h5>
+                    <p class="text-muted">{{ current_user.email }}</p>
+                    <a href="{{ url_for('profile') }}" class="btn btn-primary btn-sm">Edit Profile</a>
+                </div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Links</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="{{ url_for('request_room') }}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-bed me-2"></i>Request Room
+                    </a>
+                    <a href="{{ url_for('profile') }}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-user-edit me-2"></i>Edit Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9">
+            <!-- Room Requests -->
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">My Room Requests</h4>
+                </div>
+                <div class="card-body">
+                    {% if requests %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Hostel</th>
+                                        <th>Room</th>
+                                        <th>Status</th>
+                                        <th>Date Requested</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for request in requests %}
+                                    <tr>
+                                        <td>{{ request.room.hostel.name }}</td>
+                                        <td>{{ request.room.room_number }}</td>
+                                        <td>
+                                            <span class="badge {% if request.status == 'approved' %}bg-success
+                                                           {% elif request.status == 'rejected' %}bg-danger
+                                                           {% else %}bg-warning{% endif %}">
+                                                {{ request.status.title() }}
+                                            </span>
+                                        </td>
+                                        <td>{{ request.date_requested.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-bed fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Room Requests Yet</h5>
+                            <p class="mb-3">You haven't made any room requests yet.</p>
+                            <a href="{{ url_for('request_room') }}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Request a Room
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if requests|selectattr('status', 'equalto', 'approved')|list %}
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">My Room Details</h4>
+                </div>
+                <div class="card-body">
+                    {% for request in requests if request.status == 'approved' %}
+                        <div class="mb-3">
+                            <h5>Room Number: {{ request.room.room_number }}</h5>
+                            <p>Capacity: {{ request.room.capacity }} persons</p>
+                            <p>Price: ${{ request.room.price }}/month</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

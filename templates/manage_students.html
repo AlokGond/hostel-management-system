@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Students{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Manage Students</h2>
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-primary">Back to Dashboard</a>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">Student List</h4>
+                        <input type="text" id="studentSearch" class="form-control w-25" placeholder="Search students...">
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if students %}
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="studentTable">
+                            <thead>
+                                <tr>
+                                    <th>Basic Info</th>
+                                    <th>Contact Details</th>
+                                    <th>Academic Info</th>
+                                    <th>Room Status</th>
+                                    <th>Emergency Contact</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for student in students %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ student.first_name }} {{ student.last_name }}</strong><br>
+                                        <small>Father: {{ student.father_name }}</small><br>
+                                        <small>Mother: {{ student.mother_name }}</small><br>
+                                        <small>DOB: {{ student.date_of_birth.strftime('%d-%m-%Y') }}</small><br>
+                                        <small>Gender: {{ student.gender|title }}</small>
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-envelope"></i> {{ student.email }}<br>
+                                        <i class="fas fa-phone"></i> {{ student.phone }}<br>
+                                        <small><i class="fas fa-map-marker-alt"></i> {{ student.address }},<br>
+                                        {{ student.city }}, {{ student.state }} - {{ student.pincode }}</small>
+                                    </td>
+                                    <td>
+                                        <strong>Course:</strong> {{ student.course }}<br>
+                                        <strong>Batch:</strong> {{ student.batch_year }}<br>
+                                        <strong>Blood Group:</strong> {{ student.blood_group or 'Not specified' }}
+                                    </td>
+                                    <td>
+                                        {% set request = student.requests|selectattr('status', 'equalto', 'approved')|first %}
+                                        {% if request %}
+                                            <div class="badge bg-success mb-2">Room Assigned</div><br>
+                                            Room {{ request.room.room_number }} in {{ request.room.hostel.name }}
+                                            <form action="{{ url_for('retrieve_room', request_id=request.id) }}" method="POST" class="mt-2">
+                                                <button type="submit" class="btn btn-warning btn-sm">Retrieve Room</button>
+                                            </form>
+                                        {% else %}
+                                            {% set pending = student.requests|selectattr('status', 'equalto', 'pending')|first %}
+                                            {% if pending %}
+                                                <div class="badge bg-warning">Pending Request</div>
+                                            {% else %}
+                                                <div class="badge bg-secondary">No Room</div>
+                                            {% endif %}
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <strong>{{ student.emergency_contact_name }}</strong><br>
+                                        <small>({{ student.emergency_contact_relation }})</small><br>
+                                        <i class="fas fa-phone"></i> {{ student.emergency_contact }}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group-vertical w-100">
+                                            <button class="btn btn-info btn-sm mb-1" onclick="viewDetails('{{ student.id }}')">
+                                                <i class="fas fa-eye"></i> View Details
+                                            </button>
+                                            <button class="btn btn-primary btn-sm mb-1" onclick="editStudent('{{ student.id }}')">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </button>
+                                            <form action="{{ url_for('delete_student', user_id=student.id) }}" method="POST" 
+                                                  onsubmit="return confirm('Are you sure you want to delete {{ student.first_name }} {{ student.last_name }}? This action cannot be undone.');">
+                                                <button type="submit" class="btn btn-danger btn-sm w-100">
+                                                    <i class="fas fa-trash"></i> Delete
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">No students registered yet.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Student Details Modal -->
+<div class="modal fade" id="studentDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Student Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="studentDetailsContent">
+                <!-- Content will be loaded dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Search functionality
+document.getElementById('studentSearch').addEventListener('input', function() {
+    const searchText = this.value.toLowerCase();
+    const rows = document.querySelectorAll('#studentTable tbody tr');
+    
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchText) ? '' : 'none';
+    });
+});
+
+function viewDetails(studentId) {
+    // Implement view details functionality
+    const modal = new bootstrap.Modal(document.getElementById('studentDetailsModal'));
+    modal.show();
+}
+
+function editStudent(studentId) {
+    // Implement edit functionality
+    window.location.href = `/edit_student/${studentId}`;
+}
+</script>
+{% endblock %}

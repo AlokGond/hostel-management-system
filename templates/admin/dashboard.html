@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container animate__animated animate__fadeIn">
+    <h1 class="mb-4">Admin Dashboard</h1>
+    
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-hotel fa-3x mb-3 text-primary"></i>
+                    <h3 class="card-title h5">Manage Hostels</h3>
+                    <p class="card-text">Add, update, or delete hostels from the system.</p>
+                    <a href="{{ url_for('manage_hostels') }}" class="btn btn-primary">Manage Hostels</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-door-open fa-3x mb-3 text-primary"></i>
+                    <h3 class="card-title h5">Manage Rooms</h3>
+                    <p class="card-text">Add, update, or delete rooms and manage availability.</p>
+                    <a href="{{ url_for('manage_rooms') }}" class="btn btn-primary">Manage Rooms</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-users fa-3x mb-3 text-primary"></i>
+                    <h3 class="card-title h5">User Management</h3>
+                    <p class="card-text">View and manage user accounts and permissions.</p>
+                    <a href="#" class="btn btn-primary">Manage Users</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">System Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="bg-primary rounded-circle p-2 me-3">
+                                    <i class="fas fa-hotel text-white"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">Total Hostels</h6>
+                                    <h4 class="mb-0">{{ hostels|default([])|length }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="bg-success rounded-circle p-2 me-3">
+                                    <i class="fas fa-door-open text-white"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">Total Rooms</h6>
+                                    <h4 class="mb-0">{{ rooms|default([])|length }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-info rounded-circle p-2 me-3">
+                                    <i class="fas fa-users text-white"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">Registered Users</h6>
+                                    <h4 class="mb-0">{{ users|default([])|length }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-warning rounded-circle p-2 me-3">
+                                    <i class="fas fa-clipboard-list text-white"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">Room Requests</h6>
+                                    <h4 class="mb-0">{{ room_requests|default([])|length }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Recent Activity</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        {% for log in activity_logs|default([]) %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                {{ log.action }}
+                                <small class="text-muted d-block">{{ log.timestamp }}</small>
+                            </div>
+                            <span class="badge bg-primary rounded-pill">{{ log.user.email }}</span>
+                        </li>
+                        {% else %}
+                        <li class="list-group-item">No recent activity found</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

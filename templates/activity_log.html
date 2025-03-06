@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}Activity Log{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-3">Activity Log</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('home') }}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('profile') }}">Profile</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('security_settings') }}">Security</a></li>
+                    <li class="breadcrumb-item active">Activity Log</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Your Recent Activities</h5>
+                    <div>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="filter-toggle">
+                            <i class="fas fa-filter me-1"></i> Filter
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <div class="filter-controls mb-4 d-none" id="filter-controls">
+                        <form method="get" action="{{ url_for('activity_log') }}" class="row g-3">
+                            <div class="col-md-3">
+                                <label for="activity-type" class="form-label">Activity Type</label>
+                                <select class="form-select" id="activity-type" name="type">
+                                    <option value="">All Activities</option>
+                                    <option value="login">Login</option>
+                                    <option value="password">Password Changes</option>
+                                    <option value="2fa">Two-Factor Authentication</option>
+                                    <option value="profile">Profile Updates</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="date-from" class="form-label">Date From</label>
+                                <input type="date" class="form-control" id="date-from" name="date_from">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="date-to" class="form-label">Date To</label>
+                                <input type="date" class="form-control" id="date-to" name="date_to">
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary me-2">Apply</button>
+                                <button type="reset" class="btn btn-outline-secondary">Reset</button>
+                            </div>
+                        </form>
+                    </div>
+                
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date & Time</th>
+                                    <th>Activity</th>
+                                    <th>IP Address</th>
+                                    <th>Device / Browser</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in activity_logs %}
+                                <tr>
+                                    <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        {% if 'login' in log.action.lower() %}
+                                            <span class="badge bg-primary">Login</span>
+                                        {% elif 'password' in log.action.lower() %}
+                                            <span class="badge bg-warning text-dark">Password</span>
+                                        {% elif '2fa' in log.action.lower() %}
+                                            <span class="badge bg-info text-dark">2FA</span>
+                                        {% elif 'profile' in log.action.lower() %}
+                                            <span class="badge bg-success">Profile</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Other</span>
+                                        {% endif %}
+                                        {{ log.action }}
+                                    </td>
+                                    <td>{{ log.ip_address }}</td>
+                                    <td>{{ log.user_agent }}</td>
+                                    <td>
+                                        {% if log.details %}
+                                            <button type="button" class="btn btn-sm btn-link show-details" 
+                                                    data-bs-toggle="tooltip" data-bs-placement="top" title="View Details"
+                                                    data-details="{{ log.details }}">
+                                                <i class="fas fa-info-circle"></i>
+                                            </button>
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center">No activity logs found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    {% if total_pages > 1 %}
+                    <nav aria-label="Activity log pagination" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
+                                <a class="page-link" href="{{ url_for('activity_log', page=current_page-1) }}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            
+                            {% for page in range(1, total_pages + 1) %}
+                            <li class="page-item {% if page == current_page %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('activity_log', page=page) }}">{{ page }}</a>
+                            </li>
+                            {% endfor %}
+                            
+                            <li class="page-item {% if current_page == total_pages %}disabled{% endif %}">
+                                <a class="page-link" href="{{ url_for('activity_log', page=current_page+1) }}" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Details Modal -->
+    <div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="detailsModalLabel">Activity Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <pre class="details-content"></pre>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        
+        // Filter toggle
+        document.getElementById('filter-toggle').addEventListener('click', function() {
+            const filterControls = document.getElementById('filter-controls');
+            filterControls.classList.toggle('d-none');
+        });
+        
+        // Show details modal
+        const detailsModal = new bootstrap.Modal(document.getElementById('detailsModal'));
+        const detailButtons = document.querySelectorAll('.show-details');
+        
+        detailButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const details = this.getAttribute('data-details');
+                document.querySelector('.details-content').textContent = details;
+                detailsModal.show();
+            });
+        });
+        
+        // Set today as the default 'date to' value
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('date-to').value = today;
+        
+        // Set 30 days ago as the default 'date from' value
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        document.getElementById('date-from').value = thirtyDaysAgo.toISOString().split('T')[0];
+    });
+</script>
+{% endblock %}

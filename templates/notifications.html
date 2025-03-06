@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-3">Notifications</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('home') }}">Home</a></li>
+                    <li class="breadcrumb-item active">Notifications</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-3 mb-4">
+            <div class="card sticky-top" style="top: 80px;">
+                <div class="card-header">
+                    <h5 class="mb-0">Filters</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" action="{{ url_for('notifications') }}">
+                        <div class="mb-3">
+                            <label class="form-label">Notification Type</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="type" value="announcements" id="type-announcements" checked>
+                                <label class="form-check-label" for="type-announcements">
+                                    Announcements
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="type" value="complaints" id="type-complaints" checked>
+                                <label class="form-check-label" for="type-complaints">
+                                    Complaints
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="type" value="payment" id="type-payment" checked>
+                                <label class="form-check-label" for="type-payment">
+                                    Payment
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="type" value="visitors" id="type-visitors" checked>
+                                <label class="form-check-label" for="type-visitors">
+                                    Visitors
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="type" value="leaves" id="type-leaves" checked>
+                                <label class="form-check-label" for="type-leaves">
+                                    Leaves
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="status" value="unread" id="status-unread" checked>
+                                <label class="form-check-label" for="status-unread">
+                                    Unread
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="status" value="read" id="status-read">
+                                <label class="form-check-label" for="status-read">
+                                    Read
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Apply Filters</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-9">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">All Notifications</h5>
+                    {% if notifications|length > 0 %}
+                    <div>
+                        <button type="button" class="btn btn-sm btn-outline-primary mark-all-read">
+                            <i class="fas fa-check-double me-1"></i> Mark All as Read
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for notification in notifications %}
+                        <div class="list-group-item list-group-item-action py-3 {% if not notification.is_read %}unread{% endif %}" data-id="{{ notification.id }}">
+                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                <h6 class="mb-1">
+                                    {% if notification.type == 'announcements' %}
+                                        <span class="badge bg-primary me-2">Announcement</span>
+                                    {% elif notification.type == 'complaints' %}
+                                        <span class="badge bg-danger me-2">Complaint</span>
+                                    {% elif notification.type == 'payment' %}
+                                        <span class="badge bg-success me-2">Payment</span>
+                                    {% elif notification.type == 'visitors' %}
+                                        <span class="badge bg-info text-dark me-2">Visitor</span>
+                                    {% elif notification.type == 'leaves' %}
+                                        <span class="badge bg-warning text-dark me-2">Leave</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary me-2">Other</span>
+                                    {% endif %}
+                                    {{ notification.title }}
+                                </h6>
+                                <small class="text-muted">{{ notification.timestamp|time_ago }}</small>
+                            </div>
+                            <p class="mb-1 notification-message">{{ notification.message }}</p>
+                            {% if notification.url %}
+                            <a href="{{ notification.url }}" class="btn btn-sm btn-link p-0">View Details</a>
+                            {% endif %}
+                            <div class="notification-actions mt-2">
+                                <button type="button" class="btn btn-sm btn-outline-secondary mark-read" data-id="{{ notification.id }}" 
+                                        {% if notification.is_read %}disabled{% endif %}>
+                                    <i class="fas fa-check me-1"></i> Mark as Read
+                                </button>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="list-group-item py-4 text-center">
+                            <div class="py-5">
+                                <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
+                                <h5>No notifications</h5>
+                                <p class="text-muted">You're all caught up! There are no notifications to display.</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Pagination -->
+                {% if total_pages > 1 %}
+                <div class="card-footer">
+                    <nav aria-label="Notification pagination">
+                        <ul class="pagination justify-content-center mb-0">
+                            <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
+                                <a class="page-link" href="{{ url_for('notifications', page=current_page-1) }}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            
+                            {% for page in range(1, total_pages + 1) %}
+                            <li class="page-item {% if page == current_page %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('notifications', page=page) }}">{{ page }}</a>
+                            </li>
+                            {% endfor %}
+                            
+                            <li class="page-item {% if current_page == total_pages %}disabled{% endif %}">
+                                <a class="page-link" href="{{ url_for('notifications', page=current_page+1) }}" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Mark single notification as read
+        const markReadButtons = document.querySelectorAll('.mark-read');
+        markReadButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const notificationId = this.getAttribute('data-id');
+                markAsRead(notificationId, this);
+            });
+        });
+        
+        // Mark all notifications as read
+        const markAllReadButton = document.querySelector('.mark-all-read');
+        if (markAllReadButton) {
+            markAllReadButton.addEventListener('click', function() {
+                markAllAsRead();
+            });
+        }
+        
+        // Function to mark a notification as read
+        function markAsRead(id, button) {
+            fetch('{{ url_for("mark_notification_read") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ notification_id: id })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update UI
+                    button.disabled = true;
+                    button.closest('.list-group-item').classList.remove('unread');
+                    
+                    // Update notification counter in navbar
+                    updateNotificationCounter(-1);
+                    
+                    // Show toast notification
+                    showToast('Notification marked as read', 'success');
+                } else {
+                    showToast('Failed to mark notification as read', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('An error occurred', 'danger');
+            });
+        }
+        
+        // Function to mark all notifications as read
+        function markAllAsRead() {
+            fetch('{{ url_for("mark_all_notifications_read") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update UI - disable all mark as read buttons and remove unread class
+                    document.querySelectorAll('.mark-read').forEach(button => {
+                        button.disabled = true;
+                    });
+                    
+                    document.querySelectorAll('.list-group-item.unread').forEach(item => {
+                        item.classList.remove('unread');
+                    });
+                    
+                    // Update notification counter in navbar
+                    document.querySelector('.notification-count').textContent = '0';
+                    document.querySelector('.notification-count').classList.add('d-none');
+                    
+                    // Show toast notification
+                    showToast('All notifications marked as read', 'success');
+                } else {
+                    showToast('Failed to mark all notifications as read', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('An error occurred', 'danger');
+            });
+        }
+        
+        // Update notification counter in navbar
+        function updateNotificationCounter(change) {
+            const counter = document.querySelector('.notification-count');
+            if (counter) {
+                let count = parseInt(counter.textContent) + change;
+                counter.textContent = count;
+                
+                if (count <= 0) {
+                    counter.classList.add('d-none');
+                }
+            }
+        }
+        
+        // Function to show toast notification
+        function showToast(message, type) {
+            const toastContainer = document.getElementById('toast-container');
+            if (!toastContainer) return;
+            
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-white bg-${type} border-0`;
+            toast.setAttribute('role', 'alert');
+            toast.setAttribute('aria-live', 'assertive');
+            toast.setAttribute('aria-atomic', 'true');
+            
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            `;
+            
+            toastContainer.appendChild(toast);
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+            
+            // Remove toast after it's hidden
+            toast.addEventListener('hidden.bs.toast', function() {
+                toastContainer.removeChild(toast);
+            });
+        }
+    });
+</script>
+{% endblock %}

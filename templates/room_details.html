@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}Room Details{% endblock %}
+
+{% block content %}
+<div class="container py-5 animate__animated animate__fadeIn">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('home') }}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('our_rooms') }}">Our Rooms</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Room {{ room.room_number }}</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{{ url_for('our_rooms') }}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Rooms
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-lg-6">
+                    <img src="https://source.unsplash.com/random/800x600/?dorm,room" alt="Room {{ room.room_number }}" class="img-fluid rounded mb-4">
+                    
+                    <div class="d-flex flex-wrap gap-2 mb-4">
+                        <span class="badge bg-primary">
+                            <i class="fas fa-user me-1"></i> {{ room.capacity }} {{ 'Person' if room.capacity == 1 else 'People' }}
+                        </span>
+                        <span class="badge bg-secondary">
+                            <i class="fas fa-building me-1"></i> Floor {{ room.floor }}
+                        </span>
+                        <span class="badge {{ 'bg-success' if room.is_available else 'bg-danger' }}">
+                            <i class="fas {{ 'fa-check-circle' if room.is_available else 'fa-times-circle' }} me-1"></i> 
+                            {{ 'Available' if room.is_available else 'Not Available' }}
+                        </span>
+                        <span class="badge bg-info">
+                            <i class="fas fa-bath me-1"></i> {{ room.bathroom_type|capitalize }} Bathroom
+                        </span>
+                        <span class="badge bg-dark">
+                            <i class="fas fa-bed me-1"></i> {{ room.room_type|capitalize }}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="col-lg-6">
+                    <h1 class="h2 mb-3">Room {{ room.room_number }}</h1>
+                    <h2 class="h6 text-muted mb-4">{{ hostel.name }}</h2>
+                    
+                    <div class="mb-4">
+                        <h3 class="h5">Room Details</h3>
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <tbody>
+                                    <tr>
+                                        <td class="fw-bold bg-light">Room Type</td>
+                                        <td>{{ room.room_type|capitalize }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold bg-light">Capacity</td>
+                                        <td>{{ room.capacity }} {{ 'Person' if room.capacity == 1 else 'People' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold bg-light">Floor</td>
+                                        <td>{{ room.floor }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold bg-light">Bathroom</td>
+                                        <td>{{ room.bathroom_type|capitalize }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold bg-light">Price</td>
+                                        <td class="text-primary fw-bold">₹{{ room.price|int }} per month</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold bg-light">Status</td>
+                                        <td>
+                                            <span class="badge {{ 'bg-success' if room.is_available else 'bg-danger' }}">
+                                                {{ 'Available' if room.is_available else 'Not Available' }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h3 class="h5">Hostel Facilities</h3>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex align-items-center">
+                                <i class="fas {{ 'fa-check-circle text-success' if hostel.has_ac else 'fa-times-circle text-danger' }} me-2"></i> Air Conditioning
+                            </li>
+                            <li class="list-group-item d-flex align-items-center">
+                                <i class="fas fa-check-circle text-success me-2"></i> High-Speed WiFi
+                            </li>
+                            <li class="list-group-item d-flex align-items-center">
+                                <i class="fas fa-check-circle text-success me-2"></i> 24/7 Security
+                            </li>
+                            <li class="list-group-item d-flex align-items-center">
+                                <i class="fas fa-check-circle text-success me-2"></i> Laundry Services
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    {% if room.is_available %}
+                        {% if current_user.is_authenticated %}
+                            <div class="d-grid">
+                                <a href="{{ url_for('request_room', room_id=room.id) }}" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-bookmark me-2"></i>Request This Room
+                                </a>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i> Please <a href="{{ url_for('login') }}">login</a> to request this room.
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle me-2"></i> This room is currently not available.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-5">
+        <div class="col-12">
+            <h3 class="mb-4">Other Available Rooms</h3>
+            <div id="recommended-rooms" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-inner">
+                    <div class="carousel-item active">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card h-100">
+                                    <img src="https://source.unsplash.com/random/800x600/?dorm,single" class="card-img-top" alt="Room">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Single Room</h5>
+                                        <p class="card-text">Comfortable single occupancy room with all basic amenities.</p>
+                                        <a href="#" class="btn btn-sm btn-outline-primary">View Details</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card h-100">
+                                    <img src="https://source.unsplash.com/random/800x600/?dorm,double" class="card-img-top" alt="Room">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Double Room</h5>
+                                        <p class="card-text">Spacious double occupancy room with shared facilities.</p>
+                                        <a href="#" class="btn btn-sm btn-outline-primary">View Details</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card h-100">
+                                    <img src="https://source.unsplash.com/random/800x600/?dorm,triple" class="card-img-top" alt="Room">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Triple Room</h5>
+                                        <p class="card-text">Triple occupancy room with ample space and storage.</p>
+                                        <a href="#" class="btn btn-sm btn-outline-primary">View Details</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

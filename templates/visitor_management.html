@@ -1,0 +1,421 @@
+{% extends "base.html" %}
+
+{% block title %}Visitor Management{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-3">Visitor Management</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('home') }}">Home</a></li>
+                    <li class="breadcrumb-item active">Visitor Management</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Register New Visitor -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Register New Visitor</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{{ url_for('visitor_management') }}">
+                        <input type="hidden" name="action" value="register">
+                        
+                        <div class="mb-3">
+                            <label for="visitor_name" class="form-label">Visitor Name</label>
+                            <input type="text" class="form-control" id="visitor_name" name="visitor_name" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="visitor_phone" class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="visitor_phone" name="visitor_phone" 
+                                   pattern="[0-9]{10}" title="Please enter a valid 10-digit phone number" required>
+                            <small class="form-text text-muted">10-digit mobile number without spaces or dashes</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="visitor_id_type" class="form-label">ID Type</label>
+                            <select class="form-select" id="visitor_id_type" name="visitor_id_type" required>
+                                <option value="">Select ID Type</option>
+                                <option value="aadhar">Aadhar Card</option>
+                                <option value="voter">Voter ID</option>
+                                <option value="pan">PAN Card</option>
+                                <option value="driving">Driving License</option>
+                                <option value="passport">Passport</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="visitor_id_number" class="form-label">ID Number</label>
+                            <input type="text" class="form-control" id="visitor_id_number" name="visitor_id_number" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="purpose" class="form-label">Purpose of Visit</label>
+                            <textarea class="form-control" id="purpose" name="purpose" rows="2" required></textarea>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="visit_date" class="form-label">Visit Date</label>
+                                <input type="date" class="form-control" id="visit_date" name="visit_date" required
+                                       value="{{ today.strftime('%Y-%m-%d') }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="expected_duration" class="form-label">Expected Duration (hours)</label>
+                                <input type="number" class="form-control" id="expected_duration" name="expected_duration" 
+                                       min="1" max="8" value="1" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="who_to_meet" class="form-label">Person to Meet</label>
+                            <input type="text" class="form-control" id="who_to_meet" name="who_to_meet" required>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-user-plus me-2"></i>Register Visitor
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- QR Code Scanner (for administrators) -->
+        {% if current_user.is_admin %}
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Scan Visitor Pass</h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="py-3">
+                        <i class="fas fa-qrcode fa-3x mb-3 text-primary"></i>
+                        <p>Scan a visitor's QR code to check in or check out</p>
+                    </div>
+                    
+                    <div id="qr-reader" class="mb-3"></div>
+                    
+                    <div id="scan-result" class="d-none alert alert-info">
+                        <span id="scan-data"></span>
+                    </div>
+                    
+                    <button class="btn btn-primary" id="start-scanner">
+                        <i class="fas fa-camera me-2"></i>Start Scanner
+                    </button>
+                    <button class="btn btn-secondary d-none" id="stop-scanner">
+                        <i class="fas fa-stop me-2"></i>Stop Scanner
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Visitor History -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Visitor History</h5>
+                    <div>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="filter-toggle">
+                            <i class="fas fa-filter me-1"></i> Filter
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Filter Section -->
+                    <div class="filter-controls mb-4 d-none" id="filter-controls">
+                        <form method="get" action="{{ url_for('visitor_management') }}" class="row g-3">
+                            <div class="col-md-3">
+                                <label for="filter-name" class="form-label">Visitor Name</label>
+                                <input type="text" class="form-control" id="filter-name" name="name" value="{{ request.args.get('name', '') }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="filter-date-from" class="form-label">Date From</label>
+                                <input type="date" class="form-control" id="filter-date-from" name="date_from" value="{{ request.args.get('date_from', '') }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="filter-date-to" class="form-label">Date To</label>
+                                <input type="date" class="form-control" id="filter-date-to" name="date_to" value="{{ request.args.get('date_to', '') }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="filter-status" class="form-label">Status</label>
+                                <select class="form-select" id="filter-status" name="status">
+                                    <option value="">All</option>
+                                    <option value="active" {% if request.args.get('status') == 'active' %}selected{% endif %}>Active</option>
+                                    <option value="completed" {% if request.args.get('status') == 'completed' %}selected{% endif %}>Completed</option>
+                                    <option value="cancelled" {% if request.args.get('status') == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                                </select>
+                            </div>
+                            <div class="col-12 text-end">
+                                <button type="submit" class="btn btn-primary me-2">Apply Filters</button>
+                                <a href="{{ url_for('visitor_management') }}" class="btn btn-outline-secondary">Clear Filters</a>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Visitor Table -->
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Visitor</th>
+                                    <th>Visit Date</th>
+                                    <th>Check In</th>
+                                    <th>Check Out</th>
+                                    <th>Status</th>
+                                    <th>Purpose</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for visitor in visitors %}
+                                <tr>
+                                    <td>{{ visitor.id }}</td>
+                                    <td>
+                                        <div>{{ visitor.visitor_name }}</div>
+                                        <small class="text-muted">{{ visitor.visitor_phone }}</small>
+                                    </td>
+                                    <td>{{ visitor.visit_date.strftime('%d-%m-%Y') }}</td>
+                                    <td>
+                                        {% if visitor.check_in %}
+                                            {{ visitor.check_in.strftime('%H:%M') }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if visitor.check_out %}
+                                            {{ visitor.check_out.strftime('%H:%M') }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if visitor.status == 'active' %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% elif visitor.status == 'completed' %}
+                                            <span class="badge bg-secondary">Completed</span>
+                                        {% elif visitor.status == 'cancelled' %}
+                                            <span class="badge bg-danger">Cancelled</span>
+                                        {% else %}
+                                            <span class="badge bg-warning text-dark">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ visitor.purpose }}</td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="actionDropdown{{ visitor.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Actions
+                                            </button>
+                                            <ul class="dropdown-menu" aria-labelledby="actionDropdown{{ visitor.id }}">
+                                                <li>
+                                                    <a class="dropdown-item" href="{{ url_for('visitor_details', id=visitor.id) }}">
+                                                        <i class="fas fa-eye me-2"></i>View Details
+                                                    </a>
+                                                </li>
+                                                {% if visitor.status == 'active' or not visitor.check_in %}
+                                                <li>
+                                                    <a class="dropdown-item" href="{{ url_for('visitor_pass', id=visitor.id) }}" target="_blank">
+                                                        <i class="fas fa-id-card me-2"></i>Generate Pass
+                                                    </a>
+                                                </li>
+                                                {% endif %}
+                                                {% if not visitor.check_in %}
+                                                <li>
+                                                    <form method="post" action="{{ url_for('visitor_management') }}">
+                                                        <input type="hidden" name="action" value="check_in">
+                                                        <input type="hidden" name="visitor_id" value="{{ visitor.id }}">
+                                                        <button type="submit" class="dropdown-item">
+                                                            <i class="fas fa-sign-in-alt me-2"></i>Check In
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                                {% elif visitor.check_in and not visitor.check_out %}
+                                                <li>
+                                                    <form method="post" action="{{ url_for('visitor_management') }}">
+                                                        <input type="hidden" name="action" value="check_out">
+                                                        <input type="hidden" name="visitor_id" value="{{ visitor.id }}">
+                                                        <button type="submit" class="dropdown-item">
+                                                            <i class="fas fa-sign-out-alt me-2"></i>Check Out
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                                {% endif %}
+                                                {% if visitor.status != 'cancelled' and visitor.status != 'completed' %}
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li>
+                                                    <form method="post" action="{{ url_for('visitor_management') }}" onsubmit="return confirm('Are you sure you want to cancel this visitor?');">
+                                                        <input type="hidden" name="action" value="cancel">
+                                                        <input type="hidden" name="visitor_id" value="{{ visitor.id }}">
+                                                        <button type="submit" class="dropdown-item text-danger">
+                                                            <i class="fas fa-times-circle me-2"></i>Cancel Visit
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                                {% endif %}
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="8" class="text-center py-3">No visitors found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    {% if total_pages > 1 %}
+                    <nav aria-label="Visitor pagination" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
+                                <a class="page-link" href="{{ url_for('visitor_management', page=current_page-1) }}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            
+                            {% for page in range(1, total_pages + 1) %}
+                            <li class="page-item {% if page == current_page %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('visitor_management', page=page) }}">{{ page }}</a>
+                            </li>
+                            {% endfor %}
+                            
+                            <li class="page-item {% if current_page == total_pages %}disabled{% endif %}">
+                                <a class="page-link" href="{{ url_for('visitor_management', page=current_page+1) }}" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Filter toggle
+        const filterToggle = document.getElementById('filter-toggle');
+        if (filterToggle) {
+            filterToggle.addEventListener('click', function() {
+                const filterControls = document.getElementById('filter-controls');
+                filterControls.classList.toggle('d-none');
+            });
+        }
+        
+        // QR Code scanner (for admin)
+        const startScannerBtn = document.getElementById('start-scanner');
+        const stopScannerBtn = document.getElementById('stop-scanner');
+        const scanResult = document.getElementById('scan-result');
+        const scanData = document.getElementById('scan-data');
+        let html5QrCode;
+        
+        if (startScannerBtn) {
+            startScannerBtn.addEventListener('click', function() {
+                html5QrCode = new Html5Qrcode("qr-reader");
+                startScannerBtn.classList.add('d-none');
+                stopScannerBtn.classList.remove('d-none');
+                
+                const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+                    console.log(`QR Code detected: ${decodedText}`);
+                    stopScanner();
+                    scanResult.classList.remove('d-none');
+                    scanData.textContent = "Processing visitor: " + decodedText;
+                    
+                    // Send to server for processing
+                    fetch('{{ url_for("process_visitor_qr") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ qr_data: decodedText })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            scanResult.className = 'alert alert-success';
+                            scanData.textContent = data.message;
+                            
+                            // Refresh the page after a short delay
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 3000);
+                        } else {
+                            scanResult.className = 'alert alert-danger';
+                            scanData.textContent = data.message || 'Error processing QR code';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        scanResult.className = 'alert alert-danger';
+                        scanData.textContent = 'Failed to process the QR code';
+                    });
+                };
+                
+                const config = { fps: 10, qrbox: 250 };
+                
+                html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback)
+                    .catch(err => {
+                        console.error(`Error starting QR scanner: ${err}`);
+                        scanResult.classList.remove('d-none');
+                        scanResult.className = 'alert alert-danger';
+                        scanData.textContent = 'Could not start camera. Please check camera permissions.';
+                        startScannerBtn.classList.remove('d-none');
+                        stopScannerBtn.classList.add('d-none');
+                    });
+            });
+            
+            stopScannerBtn.addEventListener('click', function() {
+                stopScanner();
+            });
+            
+            function stopScanner() {
+                if (html5QrCode && html5QrCode.isScanning) {
+                    html5QrCode.stop().then(() => {
+                        console.log('QR Code scanning stopped.');
+                        startScannerBtn.classList.remove('d-none');
+                        stopScannerBtn.classList.add('d-none');
+                    }).catch(err => {
+                        console.error(`Error stopping QR scanner: ${err}`);
+                    });
+                }
+            }
+        }
+        
+        // Set default date values for filter
+        const dateFrom = document.getElementById('filter-date-from');
+        const dateTo = document.getElementById('filter-date-to');
+        
+        if (!dateFrom.value) {
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            dateFrom.value = thirtyDaysAgo.toISOString().split('T')[0];
+        }
+        
+        if (!dateTo.value) {
+            const today = new Date();
+            dateTo.value = today.toISOString().split('T')[0];
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Settings{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-3">System Settings</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Settings</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- General Settings -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">General Settings</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{{ url_for('settings') }}">
+                        <input type="hidden" name="section" value="general">
+                        
+                        <div class="mb-3">
+                            <label for="hostelName" class="form-label">Hostel Name</label>
+                            <input type="text" class="form-control" id="hostelName" name="hostel_name" value="BBSBEC Hostel">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="adminEmail" class="form-label">Admin Email</label>
+                            <input type="email" class="form-control" id="adminEmail" name="admin_email" value="{{ current_user.email }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="timezone" class="form-label">Timezone</label>
+                            <select class="form-select" id="timezone" name="timezone">
+                                <option value="UTC">UTC</option>
+                                <option value="Asia/Kolkata" selected>Asia/Kolkata</option>
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Security Settings -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Security Settings</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{{ url_for('settings') }}">
+                        <input type="hidden" name="section" value="security">
+                        
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="enable2FA" name="enable_2fa" checked>
+                                <label class="form-check-label" for="enable2FA">Enable Two-Factor Authentication</label>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="requireStrongPassword" name="require_strong_password" checked>
+                                <label class="form-check-label" for="requireStrongPassword">Require Strong Passwords</label>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="sessionTimeout" class="form-label">Session Timeout (minutes)</label>
+                            <input type="number" class="form-control" id="sessionTimeout" name="session_timeout" value="30">
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Notification Settings -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Notification Settings</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{{ url_for('settings') }}">
+                        <input type="hidden" name="section" value="notifications">
+                        
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="emailNotifications" name="email_notifications" checked>
+                                <label class="form-check-label" for="emailNotifications">Email Notifications</label>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="smsNotifications" name="sms_notifications">
+                                <label class="form-check-label" for="smsNotifications">SMS Notifications</label>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Maintenance Mode -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Maintenance Mode</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{{ url_for('settings') }}">
+                        <input type="hidden" name="section" value="maintenance">
+                        
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="maintenanceMode" name="maintenance_mode">
+                                <label class="form-check-label" for="maintenanceMode">Enable Maintenance Mode</label>
+                            </div>
+                            <small class="text-muted">Only administrators will be able to access the system when maintenance mode is enabled.</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="maintenanceMessage" class="form-label">Maintenance Message</label>
+                            <textarea class="form-control" id="maintenanceMessage" name="maintenance_message" rows="3">System is currently under maintenance. Please try again later.</textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

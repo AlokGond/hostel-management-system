@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Request Room{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h2 class="text-center mb-4" data-aos="fade-down">Request a Room</h2>
+
+    {% if not selected_hostel %}
+    <!-- Hostel Selection -->
+    <div class="row justify-content-center">
+        {% for hostel in hostels %}
+        <div class="col-md-6 mb-4" data-aos="fade-up" data-aos-delay="{{ loop.index * 100 }}">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="h5 mb-0">{{ hostel.name }}</h3>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{ hostel.description }}</p>
+                    <ul class="list-unstyled mb-3">
+                        {% set room_types = [] %}
+                        {% for room in hostel.rooms %}
+                            {% if room.capacity|string + room.bathroom_type not in room_types %}
+                                {% set _ = room_types.append(room.capacity|string + room.bathroom_type) %}
+                                <li class="mb-2">
+                                    <i class="fas fa-bed me-2"></i>
+                                    {% if room.capacity == 1 %}
+                                        Single Bed
+                                    {% elif room.capacity == 2 %}
+                                        Double Bed
+                                    {% else %}
+                                        Triple Bed
+                                    {% endif %}
+                                    with {{ room.bathroom_type }} bathroom
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                    <div class="text-center">
+                        <a href="{{ url_for('request_room', hostel_id=hostel.id) }}" class="btn btn-primary">
+                            <i class="fas fa-door-open me-2"></i>View Available Rooms
+                        </a>
+                    </div>
+                </div>
+                <div class="card-footer text-muted">
+                    <small>
+                        <i class="fas fa-info-circle me-1"></i>
+                        Available Rooms: {{ hostel.rooms|selectattr('is_available', 'true')|list|length }}
+                    </small>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- Room Selection for Chosen Hostel -->
+    <div class="mb-4">
+        <a href="{{ url_for('request_room') }}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Hostels
+        </a>
+    </div>
+    
+    <div class="card mb-4" data-aos="fade-up">
+        <div class="card-header bg-primary text-white">
+            <h3 class="h5 mb-0">{{ selected_hostel.name }}</h3>
+            <p class="mb-0">{{ selected_hostel.description }}</p>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                {% for room in selected_hostel.rooms %}
+                {% if room.is_available %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Room {{ room.room_number }}</h5>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-users me-2"></i>Capacity: {{ room.capacity }} {% if room.capacity == 1 %}person{% else %}people{% endif %}</li>
+                                <li><i class="fas fa-rupee-sign me-2"></i>Price: ₹{{ room.price }}/month</li>
+                                <li><i class="fas fa-bath me-2"></i>{{ room.bathroom_type|title }} Bathroom</li>
+                            </ul>
+                            <form action="{{ url_for('request_room') }}" method="post">
+                                <input type="hidden" name="room_id" value="{{ room.id }}">
+                                <input type="hidden" name="hostel_id" value="{{ selected_hostel.id }}">
+                                <button type="submit" class="btn btn-primary w-100">Request Room</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

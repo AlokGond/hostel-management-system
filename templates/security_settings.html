@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+
+{% block title %}Security Settings{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-3">Security Settings</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('home') }}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('profile') }}">Profile</a></li>
+                    <li class="breadcrumb-item active">Security</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="list-group">
+                <a href="#password-section" class="list-group-item list-group-item-action active" id="password-tab">
+                    <i class="fas fa-key me-2"></i> Password
+                </a>
+                <a href="#two-factor-section" class="list-group-item list-group-item-action" id="two-factor-tab">
+                    <i class="fas fa-shield-alt me-2"></i> Two-Factor Authentication
+                </a>
+                <a href="#login-history-section" class="list-group-item list-group-item-action" id="login-history-tab">
+                    <i class="fas fa-history me-2"></i> Login History
+                </a>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <!-- Password Section -->
+            <div class="card mb-4" id="password-section">
+                <div class="card-header">
+                    <h5 class="mb-0">Change Password</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{{ url_for('security_settings') }}">
+                        <input type="hidden" name="action" value="change_password">
+                        
+                        <div class="mb-3">
+                            <label for="current_password" class="form-label">Current Password</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="current_password" name="current_password" required>
+                                <button class="btn btn-outline-secondary toggle-password" type="button" data-target="current_password">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="new_password" class="form-label">New Password</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="new_password" name="new_password" required 
+                                       pattern=".{8,}" title="Password must be at least 8 characters">
+                                <button class="btn btn-outline-secondary toggle-password" type="button" data-target="new_password">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div class="password-strength mt-2" id="password-strength"></div>
+                            <small class="text-muted">Password must be at least 8 characters long.</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label">Confirm New Password</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                                <button class="btn btn-outline-secondary toggle-password" type="button" data-target="confirm_password">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div class="password-match mt-2" id="password-match"></div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Update Password</button>
+                    </form>
+                </div>
+                <div class="card-footer text-muted">
+                    Last password change: 
+                    {% if current_user.last_password_change %}
+                        {{ current_user.last_password_change.strftime('%Y-%m-%d %H:%M') }}
+                    {% else %}
+                        Never
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Two-Factor Authentication Section -->
+            <div class="card mb-4 d-none" id="two-factor-section">
+                <div class="card-header">
+                    <h5 class="mb-0">Two-Factor Authentication</h5>
+                </div>
+                <div class="card-body">
+                    {% if current_user.is_two_factor_enabled %}
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle me-2"></i> Two-factor authentication is currently enabled.
+                        </div>
+                        <p>Two-factor authentication adds an extra layer of security to your account by requiring more than just a password to sign in.</p>
+                        <form method="post" action="{{ url_for('security_settings') }}">
+                            <input type="hidden" name="action" value="disable_2fa">
+                            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to disable two-factor authentication? This will make your account less secure.')">
+                                <i class="fas fa-times-circle me-1"></i> Disable Two-Factor Authentication
+                            </button>
+                        </form>
+                    {% elif qr_setup %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> Scan the QR code or enter the secret key in your authenticator app.
+                        </div>
+                        <div class="text-center mb-4">
+                            <img src="https://chart.googleapis.com/chart?chs=200x200&chld=M|0&cht=qr&chl={{ provisioning_url }}" 
+                                class="img-fluid qr-code" alt="QR Code">
+                        </div>
+                        <div class="mb-4 text-center">
+                            <p class="mb-1">If you can't scan the QR code, use this code instead:</p>
+                            <div class="secret-key">{{ secret }}</div>
+                        </div>
+                        <form method="post" action="{{ url_for('security_settings') }}">
+                            <input type="hidden" name="action" value="verify_2fa">
+                            <div class="mb-3">
+                                <label for="token" class="form-label">Verification Code</label>
+                                <input type="text" class="form-control" id="token" name="token" 
+                                       placeholder="Enter the 6-digit code from your app" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-check-circle me-1"></i> Verify and Enable
+                            </button>
+                        </form>
+                    {% else %}
+                        <p>Two-factor authentication adds an extra layer of security to your account by requiring more than just a password to sign in.</p>
+                        <p>When you log in with 2FA enabled, you'll need to provide a verification code from your authenticator app.</p>
+                        <form method="post" action="{{ url_for('security_settings') }}">
+                            <input type="hidden" name="action" value="enable_2fa">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-shield-alt me-1"></i> Set Up Two-Factor Authentication
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Login History Section -->
+            <div class="card mb-4 d-none" id="login-history-section">
+                <div class="card-header">
+                    <h5 class="mb-0">Login History</h5>
+                </div>
+                <div class="card-body">
+                    <p>Here are your recent login activities:</p>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date & Time</th>
+                                    <th>IP Address</th>
+                                    <th>Device / Browser</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in login_logs %}
+                                <tr>
+                                    <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>{{ log.ip_address }}</td>
+                                    <td>{{ log.user_agent }}</td>
+                                    <td>
+                                        {% if 'failed' in log.action.lower() %}
+                                            <span class="badge bg-danger">Failed</span>
+                                        {% else %}
+                                            <span class="badge bg-success">Success</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center">No login history found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <a href="{{ url_for('activity_log') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-list me-1"></i> View Full Activity Log
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Tab navigation
+        const tabs = document.querySelectorAll('.list-group-item');
+        const sections = document.querySelectorAll('.card');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Remove active class from all tabs
+                tabs.forEach(t => t.classList.remove('active'));
+                
+                // Add active class to clicked tab
+                this.classList.add('active');
+                
+                // Hide all sections
+                sections.forEach(section => {
+                    section.classList.add('d-none');
+                });
+                
+                // Show the target section
+                const targetId = this.getAttribute('href');
+                document.querySelector(targetId).classList.remove('d-none');
+            });
+        });
+        
+        // Show default section
+        document.getElementById('password-section').classList.remove('d-none');
+        
+        // Toggle password visibility
+        const toggleButtons = document.querySelectorAll('.toggle-password');
+        toggleButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-target');
+                const input = document.getElementById(targetId);
+                
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    this.innerHTML = '<i class="fas fa-eye-slash"></i>';
+                } else {
+                    input.type = 'password';
+                    this.innerHTML = '<i class="fas fa-eye"></i>';
+                }
+            });
+        });
+        
+        // Password strength checker
+        const newPassword = document.getElementById('new_password');
+        const strengthIndicator = document.getElementById('password-strength');
+        
+        newPassword.addEventListener('input', function() {
+            const password = this.value;
+            let strength = 0;
+            let status = '';
+            
+            if (password.length >= 8) strength += 1;
+            if (password.match(/[a-z]+/)) strength += 1;
+            if (password.match(/[A-Z]+/)) strength += 1;
+            if (password.match(/[0-9]+/)) strength += 1;
+            if (password.match(/[^a-zA-Z0-9]+/)) strength += 1;
+            
+            switch(strength) {
+                case 0:
+                case 1:
+                    status = '<div class="progress"><div class="progress-bar bg-danger" style="width: 20%"></div></div><small class="text-danger">Very Weak</small>';
+                    break;
+                case 2:
+                    status = '<div class="progress"><div class="progress-bar bg-warning" style="width: 40%"></div></div><small class="text-warning">Weak</small>';
+                    break;
+                case 3:
+                    status = '<div class="progress"><div class="progress-bar bg-info" style="width: 60%"></div></div><small class="text-info">Medium</small>';
+                    break;
+                case 4:
+                    status = '<div class="progress"><div class="progress-bar bg-primary" style="width: 80%"></div></div><small class="text-primary">Strong</small>';
+                    break;
+                case 5:
+                    status = '<div class="progress"><div class="progress-bar bg-success" style="width: 100%"></div></div><small class="text-success">Very Strong</small>';
+                    break;
+            }
+            
+            strengthIndicator.innerHTML = status;
+        });
+        
+        // Password match checker
+        const confirmPassword = document.getElementById('confirm_password');
+        const matchIndicator = document.getElementById('password-match');
+        
+        function checkPasswordMatch() {
+            if (newPassword.value && confirmPassword.value) {
+                if (newPassword.value === confirmPassword.value) {
+                    matchIndicator.innerHTML = '<small class="text-success"><i class="fas fa-check-circle"></i> Passwords match</small>';
+                } else {
+                    matchIndicator.innerHTML = '<small class="text-danger"><i class="fas fa-times-circle"></i> Passwords do not match</small>';
+                }
+            } else {
+                matchIndicator.innerHTML = '';
+            }
+        }
+        
+        newPassword.addEventListener('input', checkPasswordMatch);
+        confirmPassword.addEventListener('input', checkPasswordMatch);
+    });
+</script>
+{% endblock %}

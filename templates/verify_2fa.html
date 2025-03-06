@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Verify Two-Factor Authentication{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card mt-5">
+                <div class="card-header text-center">
+                    <h4 class="mb-0">Two-Factor Authentication</h4>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-shield-alt fa-3x text-primary"></i>
+                    </div>
+                    
+                    <p class="text-center mb-4">
+                        Please enter the verification code from your authenticator app to complete the login process.
+                    </p>
+                    
+                    <form method="post" action="{{ url_for('verify_2fa') }}">
+                        <div class="mb-3">
+                            <label for="token" class="form-label">Verification Code</label>
+                            <input type="text" class="form-control form-control-lg text-center" 
+                                   id="token" name="token" placeholder="123456" required autofocus
+                                   inputmode="numeric" pattern="[0-9]*" minlength="6" maxlength="6">
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-check-circle me-2"></i>Verify
+                            </button>
+                            <a href="{{ url_for('logout') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Login
+                            </a>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-center text-muted">
+                    <small>Having trouble? Contact the administrator for assistance.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-focus the token input
+    document.getElementById('token').focus();
+    
+    // Auto-submit when all 6 digits are entered
+    document.getElementById('token').addEventListener('input', function() {
+        if (this.value.length === 6) {
+            // Small delay to let the user see what they typed
+            setTimeout(() => {
+                this.form.submit();
+            }, 300);
+        }
+    });
+});
+</script>
+{% endblock %}

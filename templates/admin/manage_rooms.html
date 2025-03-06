@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Rooms{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-3">Manage Rooms</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Manage Rooms</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Room Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Rooms</h5>
+                    <h2 class="mb-0">{{ rooms|length }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Available Rooms</h5>
+                    <h2 class="mb-0">{{ rooms|selectattr('is_available', 'equalto', true)|list|length }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <h5 class="card-title">Occupied Rooms</h5>
+                    <h2 class="mb-0">{{ rooms|selectattr('is_available', 'equalto', false)|list|length }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Capacity</h5>
+                    <h2 class="mb-0">{{ rooms|sum(attribute='capacity') }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Room Button -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRoomModal">
+                <i class="fas fa-plus me-2"></i>Add New Room
+            </button>
+        </div>
+    </div>
+
+    <!-- Rooms Table -->
+    <div class="card">
+        <div class="card-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h5 class="mb-0">All Rooms</h5>
+                </div>
+                <div class="col-auto">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="roomSearch" placeholder="Search rooms...">
+                        <button class="btn btn-outline-secondary" type="button">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Room Number</th>
+                            <th>Hostel</th>
+                            <th>Floor</th>
+                            <th>Type</th>
+                            <th>Capacity</th>
+                            <th>Price</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for room in rooms %}
+                        <tr>
+                            <td>{{ room.room_number }}</td>
+                            <td>{{ room.hostel.name }}</td>
+                            <td>{{ room.floor }}</td>
+                            <td>{{ room.room_type }}</td>
+                            <td>{{ room.capacity }}</td>
+                            <td>₹{{ room.price }}</td>
+                            <td>
+                                {% if room.is_available %}
+                                <span class="badge bg-success">Available</span>
+                                {% else %}
+                                <span class="badge bg-danger">Occupied</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#editRoomModal{{ room.id }}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteRoomModal{{ room.id }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Room Modal -->
+<div class="modal fade" id="addRoomModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{{ url_for('add_room') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Room</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="roomNumber" class="form-label">Room Number</label>
+                        <input type="text" class="form-control" id="roomNumber" name="room_number" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="hostelId" class="form-label">Hostel</label>
+                        <select class="form-select" id="hostelId" name="hostel_id" required>
+                            {% for hostel in hostels %}
+                            <option value="{{ hostel.id }}">{{ hostel.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="floor" class="form-label">Floor</label>
+                        <input type="number" class="form-control" id="floor" name="floor" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="roomType" class="form-label">Room Type</label>
+                        <select class="form-select" id="roomType" name="room_type" required>
+                            <option value="single">Single</option>
+                            <option value="double">Double</option>
+                            <option value="triple">Triple</option>
+                            <option value="quad">Quad</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="capacity" class="form-label">Capacity</label>
+                        <input type="number" class="form-control" id="capacity" name="capacity" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="price" class="form-label">Price (₹)</label>
+                        <input type="number" class="form-control" id="price" name="price" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="bathroomType" class="form-label">Bathroom Type</label>
+                        <select class="form-select" id="bathroomType" name="bathroom_type" required>
+                            <option value="attached">Attached</option>
+                            <option value="common">Common</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="amenities" class="form-label">Amenities</label>
+                        <textarea class="form-control" id="amenities" name="amenities" rows="3"></textarea>
+                        <small class="text-muted">Enter amenities separated by commas</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Room</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% for room in rooms %}
+<!-- Edit Room Modal -->
+<div class="modal fade" id="editRoomModal{{ room.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{{ url_for('update_room', room_id=room.id) }}" class="p-3">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Room</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="editRoomNumber{{ room.id }}" class="form-label">Room Number</label>
+                        <input type="text" class="form-control" id="editRoomNumber{{ room.id }}" name="room_number" value="{{ room.room_number }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editHostelId{{ room.id }}" class="form-label">Hostel</label>
+                        <select class="form-select" id="editHostelId{{ room.id }}" name="hostel_id" required>
+                            {% for hostel in hostels %}
+                            <option value="{{ hostel.id }}" {% if hostel.id == room.hostel_id %}selected{% endif %}>{{ hostel.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editFloor{{ room.id }}" class="form-label">Floor</label>
+                        <input type="number" class="form-control" id="editFloor{{ room.id }}" name="floor" value="{{ room.floor }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editRoomType{{ room.id }}" class="form-label">Room Type</label>
+                        <select class="form-select" id="editRoomType{{ room.id }}" name="room_type" required>
+                            <option value="single" {% if room.room_type == 'single' %}selected{% endif %}>Single</option>
+                            <option value="double" {% if room.room_type == 'double' %}selected{% endif %}>Double</option>
+                            <option value="triple" {% if room.room_type == 'triple' %}selected{% endif %}>Triple</option>
+                            <option value="quad" {% if room.room_type == 'quad' %}selected{% endif %}>Quad</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editCapacity{{ room.id }}" class="form-label">Capacity</label>
+                        <input type="number" class="form-control" id="editCapacity{{ room.id }}" name="capacity" value="{{ room.capacity }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editPrice{{ room.id }}" class="form-label">Price (₹)</label>
+                        <input type="number" class="form-control" id="editPrice{{ room.id }}" name="price" value="{{ room.price }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editBathroomType{{ room.id }}" class="form-label">Bathroom Type</label>
+                        <select class="form-select" id="editBathroomType{{ room.id }}" name="bathroom_type" required>
+                            <option value="attached" {% if room.bathroom_type == 'attached' %}selected{% endif %}>Attached</option>
+                            <option value="common" {% if room.bathroom_type == 'common' %}selected{% endif %}>Common</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editAmenities{{ room.id }}" class="form-label">Amenities</label>
+                        <textarea class="form-control" id="editAmenities{{ room.id }}" name="amenities" rows="3">{{ room.amenities }}</textarea>
+                        <small class="text-muted">Enter amenities separated by commas</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Room Modal -->
+<div class="modal fade" id="deleteRoomModal{{ room.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Room</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete room {{ room.room_number }}? This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" action="{{ url_for('delete_room', room_id=room.id) }}" class="d-inline">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Room search functionality
+        const searchInput = document.getElementById('roomSearch');
+        const tableRows = document.querySelectorAll('tbody tr');
+        
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            
+            tableRows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        });
+    });
+</script>
+{% endblock %}

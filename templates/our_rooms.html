@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}Our Rooms{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="text-center mb-5 animate__animated animate__fadeIn">Our Hostels</h1>
+    
+    <div class="row g-4 justify-content-center">
+        <!-- Baba Baaz Singh Hostel -->
+        <div class="col-lg-3">
+            <div class="card h-100 animate__animated animate__fadeInLeft">
+                <img src="https://source.unsplash.com/random/800x600/?dorm" class="card-img-top" alt="Baba Baaz Singh Hostel">
+                <div class="card-body">
+                    <h2 class="card-title h4">Baba Baaz Singh Hostel</h2>
+                    <div class="features mt-3">
+                        <span class="badge bg-primary me-2 mb-2">
+                            <i class="fas fa-bed me-1"></i> Two & One Bed Rooms
+                        </span>
+                        <span class="badge bg-success me-2 mb-2">
+                            <i class="fas fa-snowflake me-1"></i> AC Available
+                        </span>
+                        <span class="badge bg-info mb-2">
+                            <i class="fas fa-bath me-1"></i> Common Bathroom
+                        </span>
+                    </div>
+                    <p class="card-text mt-3">Modern accommodation with a mix of single and double occupancy rooms. Perfect for students who prefer a quieter environment.</p>
+                    <div class="room-types mt-4">
+                        <h6 class="mb-3">Room Types:</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check-circle text-success me-2"></i>Single Bed Room</li>
+                            <li><i class="fas fa-check-circle text-success me-2"></i>Double Bed Room</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Baba Ali Singh Hostel -->
+        <div class="col-lg-3">
+            <div class="card h-100 animate__animated animate__fadeInUp" style="animation-delay: 0.2s">
+                <img src="https://source.unsplash.com/random/800x600/?hostel" class="card-img-top" alt="Baba Ali Singh Hostel">
+                <div class="card-body">
+                    <h2 class="card-title h4">Baba Ali Singh Hostel</h2>
+                    <div class="features mt-3">
+                        <span class="badge bg-primary me-2 mb-2">
+                            <i class="fas fa-bed me-1"></i> Three Bed Rooms
+                        </span>
+                        <span class="badge bg-success me-2 mb-2">
+                            <i class="fas fa-bath me-1"></i> Attached Bathroom
+                        </span>
+                        <span class="badge bg-info mb-2">
+                            <i class="fas fa-users me-1"></i> 2 Rooms Share
+                        </span>
+                    </div>
+                    <p class="card-text mt-3">Spacious triple occupancy rooms with modern amenities. Ideal for students who enjoy a social atmosphere.</p>
+                    <div class="room-types mt-4">
+                        <h6 class="mb-3">Room Types:</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check-circle text-success me-2"></i>Triple Bed Room with Attached Bath</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Baba Deep Singh Hostel -->
+        <div class="col-lg-3">
+            <div class="card h-100 animate__animated animate__fadeInUp" style="animation-delay: 0.3s">
+                <img src="https://source.unsplash.com/random/800x600/?dormitory" class="card-img-top" alt="Baba Deep Singh Hostel">
+                <div class="card-body">
+                    <h2 class="card-title h4">Baba Deep Singh Hostel</h2>
+                    <div class="features mt-3">
+                        <span class="badge bg-primary me-2 mb-2">
+                            <i class="fas fa-bed me-1"></i> Two Bed Rooms
+                        </span>
+                        <span class="badge bg-info mb-2">
+                            <i class="fas fa-bath me-1"></i> Common Bathroom
+                        </span>
+                    </div>
+                    <p class="card-text mt-3">Comfortable double occupancy rooms with a focus on academic environment. Perfect for focused students.</p>
+                    <div class="room-types mt-4">
+                        <h6 class="mb-3">Room Types:</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check-circle text-success me-2"></i>Double Bed Room</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Baba Binod Singh Hostel -->
+        <div class="col-lg-3">
+            <div class="card h-100 animate__animated animate__fadeInRight" style="animation-delay: 0.4s">
+                <img src="https://source.unsplash.com/random/800x600/?dormitory" class="card-img-top" alt="Baba Binod Singh Hostel">
+                <div class="card-body">
+                    <h2 class="card-title h4">Baba Binod Singh Hostel</h2>
+                    <div class="features mt-3">
+                        <span class="badge bg-primary me-2 mb-2">
+                            <i class="fas fa-bed me-1"></i> Three Bed Rooms
+                        </span>
+                        <span class="badge bg-info mb-2">
+                            <i class="fas fa-bath me-1"></i> Common Bathroom
+                        </span>
+                    </div>
+                    <p class="card-text mt-3">Comfortable triple occupancy rooms with a focus on academic environment. Perfect for focused students.</p>
+                    <div class="room-types mt-4">
+                        <h6 class="mb-3">Room Types:</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check-circle text-success me-2"></i>Triple Bed Room</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Amenities Section -->
+    <section class="amenities-section mt-5 py-5 bg-light rounded-3">
+        <div class="container">
+            <h2 class="text-center mb-4">Common Amenities</h2>
+            <div class="row g-4">
+                <div class="col-md-3 col-6">
+                    <div class="text-center animate__animated animate__fadeIn">
+                        <i class="fas fa-wifi fa-2x text-primary mb-2"></i>
+                        <h5 class="h6">Free WiFi</h5>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="text-center animate__animated animate__fadeIn">
+                        <i class="fas fa-broom fa-2x text-primary mb-2"></i>
+                        <h5 class="h6">Daily Cleaning</h5>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="text-center animate__animated animate__fadeIn">
+                        <i class="fas fa-shield-alt fa-2x text-primary mb-2"></i>
+                        <h5 class="h6">24/7 Security</h5>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="text-center animate__animated animate__fadeIn">
+                        <i class="fas fa-first-aid fa-2x text-primary mb-2"></i>
+                        <h5 class="h6">Medical Support</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="contact-section mt-5">
+        <div class="card animate__animated animate__fadeIn">
+            <div class="card-body text-center">
+                <h3 class="card-title">Interested in Booking a Room?</h3>
+                <p class="card-text">Contact our administrative office for availability and booking procedures.</p>
+                <a href="{{ url_for('contact') }}" class="btn btn-primary">Contact Us</a>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

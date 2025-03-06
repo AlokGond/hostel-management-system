@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Requests{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2>Manage Room Requests</h2>
+            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-primary">Back to Dashboard</a>
+        </div>
+        <hr>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-white">
+                <h4>Pending Requests</h4>
+            </div>
+            <div class="card-body">
+                {% if pending_requests %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Student Email</th>
+                                    <th>Room Number</th>
+                                    <th>Date Requested</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for request in pending_requests %}
+                                    <tr>
+                                        <td>{{ request.user.email }}</td>
+                                        <td>{{ request.room.room_number }}</td>
+                                        <td>{{ request.date_requested.strftime('%Y-%m-%d') }}</td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <form action="{{ url_for('update_request', request_id=request.id) }}" method="POST" style="display: inline;">
+                                                    <input type="hidden" name="action" value="approve">
+                                                    <button type="submit" class="btn btn-success btn-sm">Approve</button>
+                                                </form>
+                                                <form action="{{ url_for('update_request', request_id=request.id) }}" method="POST" style="display: inline;">
+                                                    <input type="hidden" name="action" value="reject">
+                                                    <button type="submit" class="btn btn-danger btn-sm">Reject</button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p>No pending requests.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h4>Approved Requests</h4>
+            </div>
+            <div class="card-body">
+                {% if approved_requests %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Student Email</th>
+                                    <th>Room Number</th>
+                                    <th>Date Requested</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for request in approved_requests %}
+                                    <tr>
+                                        <td>{{ request.user.email }}</td>
+                                        <td>{{ request.room.room_number }}</td>
+                                        <td>{{ request.date_requested.strftime('%Y-%m-%d') }}</td>
+                                        <td>
+                                            <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal-{{ request.id }}">
+                                                Delete
+                                            </button>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Delete Confirmation Modal -->
+                                    <div class="modal fade" id="deleteModal-{{ request.id }}" tabindex="-1">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Confirm Deletion</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    Are you sure you want to delete this approved request?
+                                                    This will free up the room for new requests.
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                    <form action="{{ url_for('update_request', request_id=request.id) }}" method="POST">
+                                                        <input type="hidden" name="action" value="delete">
+                                                        <button type="submit" class="btn btn-danger">Delete Request</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p>No approved requests.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+
+{% block title %}Complaint Details{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-3">Complaint Details</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('home') }}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('complaints') }}">Complaints</a></li>
+                    <li class="breadcrumb-item active">Complaint #{{ complaint.id }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{{ complaint.subject }}</h5>
+                    <span class="badge 
+                        {% if complaint.status == 'new' %} bg-info text-dark
+                        {% elif complaint.status == 'in_progress' %} bg-warning text-dark
+                        {% elif complaint.status == 'resolved' %} bg-success
+                        {% elif complaint.status == 'closed' %} bg-secondary
+                        {% endif %}">
+                        {{ complaint.status|title }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Category:</strong> 
+                            <span class="badge 
+                                {% if complaint.category == 'maintenance' %} bg-secondary
+                                {% elif complaint.category == 'plumbing' %} bg-info text-dark
+                                {% elif complaint.category == 'electrical' %} bg-warning text-dark
+                                {% elif complaint.category == 'furniture' %} bg-dark
+                                {% elif complaint.category == 'cleanliness' %} bg-success
+                                {% elif complaint.category == 'wifi' %} bg-primary
+                                {% elif complaint.category == 'mess' %} bg-danger
+                                {% else %} bg-secondary
+                                {% endif %}">
+                                {{ complaint.category|title }}
+                            </span>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Date Submitted:</strong> {{ complaint.created_at.strftime('%d-%m-%Y %H:%M') }}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Priority:</strong> 
+                            <span class="badge 
+                                {% if complaint.priority == 'low' %} bg-success
+                                {% elif complaint.priority == 'medium' %} bg-info
+                                {% elif complaint.priority == 'high' %} bg-warning text-dark
+                                {% elif complaint.priority == 'urgent' %} bg-danger
+                                {% endif %}">
+                                {{ complaint.priority|title }}
+                            </span>
+                        </div>
+                        <div class="col-md-6">
+                            {% if complaint.is_private %}
+                            <span class="badge bg-secondary">
+                                <i class="fas fa-lock me-1"></i> Private
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if complaint.resolved_at %}
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Resolved Date:</strong> {{ complaint.resolved_at.strftime('%d-%m-%Y %H:%M') }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <hr>
+                    
+                    <h6 class="card-subtitle mb-2 text-muted">Description</h6>
+                    <p class="card-text">{{ complaint.description }}</p>
+                    
+                    {% if complaint.attachments %}
+                    <hr>
+                    <h6 class="mb-2 text-muted">Attachments</h6>
+                    <div class="row">
+                        {% for attachment in complaint.attachments %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100">
+                                {% if attachment.filename.lower().endswith(('jpg', 'jpeg', 'png', 'gif')) %}
+                                <img src="{{ url_for('static', filename='uploads/complaints/' + attachment.filename) }}" 
+                                     class="card-img-top img-fluid" alt="Attachment">
+                                {% else %}
+                                <div class="card-body text-center">
+                                    <i class="fas fa-file-pdf fa-3x text-danger"></i>
+                                </div>
+                                {% endif %}
+                                <div class="card-footer d-grid">
+                                    <a href="{{ url_for('static', filename='uploads/complaints/' + attachment.filename) }}" 
+                                       class="btn btn-sm btn-outline-primary" target="_blank">
+                                        <i class="fas fa-download me-1"></i> Download
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    {% if complaint.admin_response %}
+                    <hr>
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading">Staff Response</h6>
+                        <p class="mb-0">{{ complaint.admin_response }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            {% if complaint.status == 'new' %}
+                            <a href="{{ url_for('complaints', edit=complaint.id) }}" class="btn btn-primary">
+                                <i class="fas fa-edit me-1"></i> Edit
+                            </a>
+                            <form method="post" action="{{ url_for('complaints') }}" class="d-inline ms-2" 
+                                  onsubmit="return confirm('Are you sure you want to withdraw this complaint?')">
+                                <input type="hidden" name="action" value="withdraw">
+                                <input type="hidden" name="complaint_id" value="{{ complaint.id }}">
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-times me-1"></i> Withdraw
+                                </button>
+                            </form>
+                            {% endif %}
+                            
+                            {% if complaint.status == 'resolved' %}
+                            <form method="post" action="{{ url_for('complaints') }}" class="d-inline">
+                                <input type="hidden" name="action" value="close">
+                                <input type="hidden" name="complaint_id" value="{{ complaint.id }}">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-check me-1"></i> Mark as Closed
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                        <a href="{{ url_for('complaints') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> Back to Complaints
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Comments/Updates Section -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Updates & Comments</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Comment Form -->
+                    {% if complaint.status != 'closed' %}
+                    <form method="post" action="{{ url_for('complaint_details', id=complaint.id) }}">
+                        <div class="mb-3">
+                            <label for="comment" class="form-label">Add Comment</label>
+                            <textarea class="form-control" id="comment" name="comment" rows="3" required></textarea>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane me-1"></i> Post Comment
+                            </button>
+                        </div>
+                    </form>
+                    <hr>
+                    {% endif %}
+                    
+                    <!-- Comments List -->
+                    <div class="comments-list">
+                        {% if complaint.comments %}
+                            {% for comment in complaint.comments|sort(attribute='created_at', reverse=true) %}
+                            <div class="comment-item mb-3">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        {% if comment.is_admin %}
+                                        <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                            <i class="fas fa-user-shield"></i>
+                                        </div>
+                                        {% else %}
+                                        <div class="avatar bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <h6 class="mb-0">
+                                                {% if comment.is_admin %}
+                                                <span class="badge bg-primary">Staff</span>
+                                                {% else %}
+                                                {{ current_user.first_name }} {{ current_user.last_name }}
+                                                {% endif %}
+                                            </h6>
+                                            <small class="text-muted">{{ comment.created_at.strftime('%d-%m-%Y %H:%M') }}</small>
+                                        </div>
+                                        <p class="mb-0">{{ comment.text }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-center text-muted">No comments yet.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Status Timeline -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Status Timeline</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="timeline">
+                        <li class="timeline-item">
+                            <div class="timeline-marker bg-info"></div>
+                            <div class="timeline-content">
+                                <h6 class="mb-0">Submitted</h6>
+                                <small class="text-muted">{{ complaint.created_at.strftime('%d-%m-%Y %H:%M') }}</small>
+                                <p class="mb-0">Complaint was submitted</p>
+                            </div>
+                        </li>
+                        
+                        {% if complaint.status == 'in_progress' or complaint.status == 'resolved' or complaint.status == 'closed' %}
+                        <li class="timeline-item">
+                            <div class="timeline-marker bg-warning"></div>
+                            <div class="timeline-content">
+                                <h6 class="mb-0">In Progress</h6>
+                                <small class="text-muted">Date processed</small>
+                                <p class="mb-0">Complaint is being processed</p>
+                            </div>
+                        </li>
+                        {% endif %}
+                        
+                        {% if complaint.status == 'resolved' or complaint.status == 'closed' %}
+                        <li class="timeline-item">
+                            <div class="timeline-marker bg-success"></div>
+                            <div class="timeline-content">
+                                <h6 class="mb-0">Resolved</h6>
+                                <small class="text-muted">{{ complaint.resolved_at.strftime('%d-%m-%Y %H:%M') if complaint.resolved_at else 'Date resolved' }}</small>
+                                <p class="mb-0">Issue has been resolved</p>
+                            </div>
+                        </li>
+                        {% endif %}
+                        
+                        {% if complaint.status == 'closed' %}
+                        <li class="timeline-item">
+                            <div class="timeline-marker bg-secondary"></div>
+                            <div class="timeline-content">
+                                <h6 class="mb-0">Closed</h6>
+                                <small class="text-muted">Date closed</small>
+                                <p class="mb-0">Complaint has been closed</p>
+                            </div>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Similar Complaints -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Similar Complaints</h5>
+                </div>
+                <div class="card-body">
+                    {% if similar_complaints %}
+                        <ul class="list-group list-group-flush">
+                            {% for similar in similar_complaints %}
+                            <li class="list-group-item">
+                                <a href="{{ url_for('complaint_details', id=similar.id) }}" class="text-decoration-none">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1 text-truncate">{{ similar.subject }}</h6>
+                                        <small class="text-muted">{{ similar.created_at.strftime('%d-%m') }}</small>
+                                    </div>
+                                    <p class="mb-1 text-truncate text-muted">{{ similar.description[:50] }}...</p>
+                                    <small>
+                                        <span class="badge 
+                                            {% if similar.status == 'new' %} bg-info text-dark
+                                            {% elif similar.status == 'in_progress' %} bg-warning text-dark
+                                            {% elif similar.status == 'resolved' %} bg-success
+                                            {% elif similar.status == 'closed' %} bg-secondary
+                                            {% endif %}">
+                                            {{ similar.status|title }}
+                                        </span>
+                                    </small>
+                                </a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-center text-muted">No similar complaints found.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block head %}
+{{ super() }}
+<style>
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+        list-style: none;
+    }
+    
+    .timeline-item {
+        position: relative;
+        padding-bottom: 20px;
+    }
+    
+    .timeline-item:last-child {
+        padding-bottom: 0;
+    }
+    
+    .timeline-marker {
+        position: absolute;
+        left: -30px;
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        margin-top: 5px;
+    }
+    
+    .timeline-item:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        left: -23px;
+        top: 25px;
+        bottom: 0;
+        width: 2px;
+        background-color: #e9ecef;
+    }
+</style>
+{% endblock %}
