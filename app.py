@@ -11,12 +11,18 @@ import pyotp
 from functools import wraps
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = '4x7PJz9Ks2mWvNqY3bFhRtUe'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///hostel.db'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', '4x7PJz9Ks2mWvNqY3bFhRtUe')
+
+# Database configuration
+if os.environ.get('FLASK_ENV') == 'production':
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', '').replace('postgres://', 'postgresql://')
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///hostel.db'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
-app.config['FLASK_ENV'] = 'production'
+app.config['FLASK_ENV'] = os.environ.get('FLASK_ENV', 'development')
 
 # Ensure upload directories exist
 for folder in ['profile_photos', 'room_photos', 'maintenance_photos']:
@@ -1580,74 +1586,39 @@ def retrieve_room(request_id):
 if __name__ == '__main__':
     print("Starting Flask server...")
     with app.app_context():
+        print("Creating database tables...")
         db.create_all()
         
-        # Check if admin user exists, if not create one
+        # Create admin user if it doesn't exist
         admin = User.query.filter_by(email='admin@example.com').first()
         if not admin:
-            admin_password = generate_password_hash('admin123')
+            print("Creating admin user...")
             admin = User(
                 email='admin@example.com',
-                password=admin_password,
+                password=generate_password_hash('admin123'),
                 is_admin=True,
                 first_name='Admin',
                 last_name='User',
-                father_name='N/A',
-                mother_name='N/A',
-                date_of_birth=datetime(1990, 1, 1).date(),
-                gender='other',
-                phone='0000000000',
-                address='Admin Office',
+                father_name='Admin Father',
+                mother_name='Admin Mother',
+                date_of_birth=datetime.strptime('1990-01-01', '%Y-%m-%d'),
+                gender='Other',
+                phone='1234567890',
+                address='Admin Address',
                 city='Admin City',
                 state='Admin State',
-                pincode='000000',
-                course='N/A',
-                batch_year=2025,
-                blood_group='N/A',
-                emergency_contact='0000000000',
-                emergency_contact_name='Emergency Admin',
-                emergency_contact_relation='Admin'
+                pincode='123456',
+                course='Admin',
+                batch_year=2023,
+                emergency_contact='1234567890',
+                emergency_contact_name='Emergency Contact',
+                emergency_contact_relation='Relation'
             )
             db.session.add(admin)
-            
-            # Add default hostels
-            hostel1 = Hostel(
-                name='Baba Baaz Singh Hostel',
-                description='Modern accommodation with a mix of single and double occupancy rooms.',
-                room_types=json.dumps(['single', 'double']),
-                has_ac=True,
-                has_attached_bathroom=False
-            )
-            
-            hostel2 = Hostel(
-                name='Baba Ali Singh Hostel',
-                description='Spacious triple occupancy rooms with modern amenities.',
-                room_types=json.dumps(['triple']),
-                has_ac=False,
-                has_attached_bathroom=True
-            )
-            
-            hostel3 = Hostel(
-                name='Baba Deep Singh Hostel',
-                description='Comfortable double occupancy rooms with a focus on academic environment.',
-                room_types=json.dumps(['double']),
-                has_ac=False,
-                has_attached_bathroom=False
-            )
-            
-            db.session.add_all([hostel1, hostel2, hostel3])
             db.session.commit()
-            
-            # Add sample rooms
-            rooms = [
-                Room(hostel_id=1, room_number='101', capacity=1, room_type='single', floor=1, price=5000, is_available=True, bathroom_type='common'),
-                Room(hostel_id=1, room_number='102', capacity=2, room_type='double', floor=1, price=4000, is_available=True, bathroom_type='common'),
-                Room(hostel_id=2, room_number='201', capacity=3, room_type='triple', floor=2, price=3500, is_available=True, bathroom_type='attached'),
-                Room(hostel_id=3, room_number='301', capacity=2, room_type='double', floor=3, price=4200, is_available=True, bathroom_type='common')
-            ]
-            db.session.add_all(rooms)
-            db.session.commit()
-            
-            print("Database initialized with default data")
-            
-    app.run(debug=True)
+            print("Admin user created successfully!")
+        
+        print("Database initialization completed!")
+    
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
