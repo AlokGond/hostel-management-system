@@ -41,6 +41,12 @@ migrate = Migrate(app, db)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
+# Ensure upload directories exist
+for folder in ['profile_photos', 'room_photos', 'maintenance_photos']:
+    folder_path = os.path.join(app.config['UPLOAD_FOLDER'], folder)
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 # Role-based access control
@@ -58,6 +64,7 @@ def allowed_file(filename):
 
 # User Model
 class User(UserMixin, db.Model):
+    __tablename__ = 'users'  # Explicitly set table name for PostgreSQL
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
@@ -97,6 +104,7 @@ class User(UserMixin, db.Model):
 
 # Hostel Model
 class Hostel(db.Model):
+    __tablename__ = 'hostels'  # Explicitly set table name for PostgreSQL
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
@@ -111,13 +119,14 @@ class Hostel(db.Model):
 
 # Room Model
 class Room(db.Model):
+    __tablename__ = 'rooms'  # Explicitly set table name for PostgreSQL
     id = db.Column(db.Integer, primary_key=True)
     room_number = db.Column(db.String(10), unique=True, nullable=False)
     capacity = db.Column(db.Integer, nullable=False)
     price = db.Column(db.Float, nullable=False)
     is_available = db.Column(db.Boolean, default=True)
     bathroom_type = db.Column(db.String(20), nullable=False)
-    hostel_id = db.Column(db.Integer, db.ForeignKey('hostel.id'), nullable=False)
+    hostel_id = db.Column(db.Integer, db.ForeignKey('hostels.id'), nullable=False)
     floor = db.Column(db.Integer)
     room_type = db.Column(db.String(50))
     amenities = db.Column(db.String(500))
@@ -129,10 +138,11 @@ class Room(db.Model):
 
 # Room Request Model
 class RoomRequest(db.Model):
+    __tablename__ = 'room_requests'  # Explicitly set table name for PostgreSQL
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    room_id = db.Column(db.Integer, db.ForeignKey('room.id'), nullable=False)
-    hostel_id = db.Column(db.Integer, db.ForeignKey('hostel.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    room_id = db.Column(db.Integer, db.ForeignKey('rooms.id'), nullable=False)
+    hostel_id = db.Column(db.Integer, db.ForeignKey('hostels.id'), nullable=False)
     status = db.Column(db.String(20), default='pending')
     date_requested = db.Column(db.DateTime, default=datetime.utcnow)
     preferred_duration = db.Column(db.String(50))
@@ -141,8 +151,9 @@ class RoomRequest(db.Model):
 
 # Notification Model
 class Notification(db.Model):
+    __tablename__ = 'notifications'  # Explicitly set table name for PostgreSQL
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     title = db.Column(db.String(100), nullable=False)
     message = db.Column(db.Text, nullable=False)
     type = db.Column(db.String(50))  # e.g., 'request', 'maintenance', 'announcement'
@@ -151,8 +162,9 @@ class Notification(db.Model):
 
 # Complaint Model
 class Complaint(db.Model):
+    __tablename__ = 'complaints'  # Explicitly set table name for PostgreSQL
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     complaint_type = db.Column(db.String(50), nullable=False)
     subject = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=False)
@@ -168,24 +180,27 @@ class Complaint(db.Model):
 
 # Complaint Comment Model
 class ComplaintComment(db.Model):
+    __tablename__ = 'complaint_comments'  # Explicitly set table name for PostgreSQL
     id = db.Column(db.Integer, primary_key=True)
-    complaint_id = db.Column(db.Integer, db.ForeignKey('complaint.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    complaint_id = db.Column(db.Integer, db.ForeignKey('complaints.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     text = db.Column(db.Text, nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 # Complaint Attachment Model
 class ComplaintAttachment(db.Model):
+    __tablename__ = 'complaint_attachments'  # Explicitly set table name for PostgreSQL
     id = db.Column(db.Integer, primary_key=True)
-    complaint_id = db.Column(db.Integer, db.ForeignKey('complaint.id'), nullable=False)
+    complaint_id = db.Column(db.Integer, db.ForeignKey('complaints.id'), nullable=False)
     filename = db.Column(db.String(255), nullable=False)
     uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 # Payment Model
 class Payment(db.Model):
+    __tablename__ = 'payments'  # Explicitly set table name for PostgreSQL
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     amount = db.Column(db.Float, nullable=False)
     payment_type = db.Column(db.String(50), nullable=False)
     payment_date = db.Column(db.DateTime, default=datetime.utcnow)
@@ -196,8 +211,9 @@ class Payment(db.Model):
 
 # Leave Application Model
 class Leave(db.Model):
+    __tablename__ = 'leaves'  # Explicitly set table name for PostgreSQL
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     start_date = db.Column(db.DateTime, nullable=False)
     end_date = db.Column(db.DateTime, nullable=False)
     reason = db.Column(db.Text, nullable=False)
@@ -208,23 +224,26 @@ class Leave(db.Model):
 
 # Mess Management Models
 class MealPlan(db.Model):
+    __tablename__ = 'meal_plans'  # Explicitly set table name for PostgreSQL
     id = db.Column(db.Integer, primary_key=True)
     day = db.Column(db.String(10), nullable=False)
     breakfast = db.Column(db.Text)
     lunch = db.Column(db.Text)
     dinner = db.Column(db.Text)
-    special_menu = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    special_meal = db.Column(db.Text)
+    week_number = db.Column(db.Integer, default=1)
 
 class MealPreference(db.Model):
+    __tablename__ = 'meal_preferences'  # Explicitly set table name for PostgreSQL
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    preference_type = db.Column(db.String(50))  # e.g., 'vegetarian', 'non-vegetarian'
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    preference_type = db.Column(db.String(50))
     allergies = db.Column(db.Text)
     special_requirements = db.Column(db.Text)
 
 # Visitor Management Model
 class Visitor(db.Model):
+    __tablename__ = 'visitors'  # Explicitly set table name for PostgreSQL
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     phone = db.Column(db.String(20), nullable=False)
@@ -232,15 +251,16 @@ class Visitor(db.Model):
     visit_date = db.Column(db.DateTime, default=datetime.utcnow)
     check_in = db.Column(db.DateTime)
     check_out = db.Column(db.DateTime)
-    student_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    student_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     id_proof_type = db.Column(db.String(50))
     id_proof_number = db.Column(db.String(50))
     status = db.Column(db.String(20), default='pending')
 
 # Maintenance Records
 class MaintenanceRecord(db.Model):
+    __tablename__ = 'maintenance_records'  # Explicitly set table name for PostgreSQL
     id = db.Column(db.Integer, primary_key=True)
-    room_id = db.Column(db.Integer, db.ForeignKey('room.id'), nullable=False)
+    room_id = db.Column(db.Integer, db.ForeignKey('rooms.id'), nullable=False)
     type = db.Column(db.String(50), nullable=False)
     description = db.Column(db.Text, nullable=False)
     reported_date = db.Column(db.DateTime, default=datetime.utcnow)
@@ -252,8 +272,9 @@ class MaintenanceRecord(db.Model):
 
 # Inventory Management
 class InventoryItem(db.Model):
+    __tablename__ = 'inventory_items'  # Explicitly set table name for PostgreSQL
     id = db.Column(db.Integer, primary_key=True)
-    room_id = db.Column(db.Integer, db.ForeignKey('room.id'), nullable=False)
+    room_id = db.Column(db.Integer, db.ForeignKey('rooms.id'), nullable=False)
     item_name = db.Column(db.String(100), nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
     condition = db.Column(db.String(50))
@@ -262,19 +283,21 @@ class InventoryItem(db.Model):
 
 # Announcement Model
 class Announcement(db.Model):
+    __tablename__ = 'announcements'  # Explicitly set table name for PostgreSQL
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
     content = db.Column(db.Text, nullable=False)
-    hostel_id = db.Column(db.Integer, db.ForeignKey('hostel.id'))
+    hostel_id = db.Column(db.Integer, db.ForeignKey('hostels.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     expires_at = db.Column(db.DateTime)
     priority = db.Column(db.String(20), default='normal')
-    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'))
 
 # Activity Log Model
 class ActivityLog(db.Model):
+    __tablename__ = 'activity_logs'  # Explicitly set table name for PostgreSQL
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     action = db.Column(db.String(100), nullable=False)
     details = db.Column(db.Text)
     ip_address = db.Column(db.String(50))
