@@ -16,9 +16,8 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', '4x7PJz9Ks2mWvNqY3bFhRtUe')
 
-# Database configuration
+# Database configuration - MUST come before SECRET_KEY
 if os.environ.get('FLASK_ENV') == 'production':
     database_url = os.environ.get('DATABASE_URL', '')
     if database_url.startswith('postgres://'):
@@ -29,17 +28,14 @@ else:
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///hostel.db'
     logger.info("Using development database: sqlite:///hostel.db")
 
+# Other configurations
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', '4x7PJz9Ks2mWvNqY3bFhRtUe')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 app.config['FLASK_ENV'] = os.environ.get('FLASK_ENV', 'development')
 
-# Ensure upload directories exist
-for folder in ['profile_photos', 'room_photos', 'maintenance_photos']:
-    folder_path = os.path.join(app.config['UPLOAD_FOLDER'], folder)
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path)
-
+# Initialize extensions
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 login_manager = LoginManager(app)
