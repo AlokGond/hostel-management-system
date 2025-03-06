@@ -1565,36 +1565,41 @@ if __name__ == '__main__':
     with app.app_context():
         try:
             logger.info("Creating database tables...")
+            # Create all tables
             db.create_all()
             
             # Create admin user if it doesn't exist
             admin = User.query.filter_by(email='admin@example.com').first()
             if not admin:
                 logger.info("Creating admin user...")
-                admin = User(
-                    email='admin@example.com',
-                    password=generate_password_hash('admin123'),
-                    is_admin=True,
-                    first_name='Admin',
-                    last_name='User',
-                    father_name='Admin Father',
-                    mother_name='Admin Mother',
-                    date_of_birth=datetime.strptime('1990-01-01', '%Y-%m-%d'),
-                    gender='Other',
-                    phone='1234567890',
-                    address='Admin Address',
-                    city='Admin City',
-                    state='Admin State',
-                    pincode='123456',
-                    course='Admin',
-                    batch_year=2023,
-                    emergency_contact='1234567890',
-                    emergency_contact_name='Emergency Contact',
-                    emergency_contact_relation='Relation'
-                )
-                db.session.add(admin)
-                db.session.commit()
-                logger.info("Admin user created successfully!")
+                try:
+                    admin = User(
+                        email='admin@example.com',
+                        password=generate_password_hash('admin123'),
+                        is_admin=True,
+                        first_name='Admin',
+                        last_name='User',
+                        father_name='Admin Father',
+                        mother_name='Admin Mother',
+                        date_of_birth=datetime.strptime('1990-01-01', '%Y-%m-%d'),
+                        gender='Other',
+                        phone='1234567890',
+                        address='Admin Address',
+                        city='Admin City',
+                        state='Admin State',
+                        pincode='123456',
+                        course='Admin',
+                        batch_year=2023,
+                        emergency_contact='1234567890',
+                        emergency_contact_name='Emergency Contact',
+                        emergency_contact_relation='Relation'
+                    )
+                    db.session.add(admin)
+                    db.session.commit()
+                    logger.info("Admin user created successfully!")
+                except Exception as e:
+                    logger.error(f"Error creating admin user: {str(e)}")
+                    db.session.rollback()
             else:
                 logger.info("Admin user already exists")
             
