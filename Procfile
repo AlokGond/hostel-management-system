@@ -1,2 +1,2 @@
-release: python migrations.py && python init_db.py
+release: python db_setup.py
 web: gunicorn app:app
